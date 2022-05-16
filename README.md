@@ -14,7 +14,7 @@ Author URI: https://everpress.co
 
 Host your used Google fonts on your server and make your site more GDPR compliant.
 
-About 50 mio [\*](https://trends.builtwith.com/websitelist/Google-Font-API) sites use Google Fonts and in January 2022 a German court as ruled that using Google Fonts is a violation of Europe’s GDPR (General Data Protection Regulation).
+About 50 mio[\*](https://trends.builtwith.com/websitelist/Google-Font-API) sites use Google Fonts and in January 2022 a German court as ruled that using Google Fonts is a violation of Europe’s GDPR (General Data Protection Regulation).
 
 more on [wptavern.com](https://wptavern.com/german-court-fines-website-owner-for-violating-the-gdpr-by-using-google-hosted-fonts)
 
@@ -22,7 +22,7 @@ more on [wptavern.com](https://wptavern.com/german-court-fines-website-owner-for
 
 ### 1. Option Interface.
 
-![Option Interface.](screenshot-1.png)
+![Option Interface.](.wordpress-org/screenshot-1.png)
 
 ### Features
 
