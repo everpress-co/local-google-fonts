@@ -1,0 +1,20 @@
+name: Plugin asset/readme update
+on:
+  push:
+    branches:
+      - 'develop'
+    paths:
+      - 'README.md'
+      - '.wordpress-org/**'
+jobs:
+  trunk:
+    name: Update Assets and Readme
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - uses: evrpress/action-wordpress-plugin-readme-screenshot-update@main
+      - name: WordPress.org plugin asset/readme update
+        uses: evrpress/action-wordpress-plugin-asset-update@develop
+        env:
+          SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
+          README_NAME: README.md
