@@ -106,18 +106,19 @@ class LGF_Admin {
 
 	public function render_settings() {
 
-		$buffer = get_option( 'local_google_fonts_buffer' );
-
-		if ( empty( $buffer ) ) {
-			return;
-		}
+		$buffer = get_option( 'local_google_fonts_buffer', array() );
 
 		$folder     = WP_CONTENT_DIR . '/uploads/fonts';
 		$folder_url = WP_CONTENT_URL . '/uploads/fonts';
+		$count      = count( $buffer );
 
 		?>
 	<div class="wrap">
-	<h1><?php printf( __( '%d Google font sources found on your site.', 'local-google-fonts' ), count( $buffer ) ); ?></h1>
+	<h1><?php printf( esc_html__( _n( '%d Google font source found on your site.', '%d Google font sources found on your site.', $count, 'mailster' ) ), $count ); ?></h1>
+
+	<?php if ( ! $count ) : ?>
+		<p><?php esc_html_e( 'You have currently no Google fonts in use on your site.', 'local-google-fonts' ); ?></p>
+	<?php endif; ?>
 	<form action="options.php" method="post">
 		<?php
 		settings_fields( 'local_google_fonts' );
@@ -127,7 +128,6 @@ class LGF_Admin {
 		<?php foreach ( $buffer as $handle => $data ) : ?>
 
 		<h2><?php esc_html_e( 'Handle', 'local-google-fonts' ); ?>: <code><?php esc_html_e( $handle ); ?></code></h2>
-
 
 	<table class="wp-list-table widefat fixed striped table-view-list ">
 		<thead>
@@ -148,7 +148,6 @@ class LGF_Admin {
 				<td>
 					<p class="code">
 					<?php foreach ( $set->variants as $variant ) : ?>
-
 						<?php printf( '%s %s', $variant->fontStyle, $variant->fontWeight ); ?>, 
 					<?php endforeach ?>
 					</p>
