@@ -4,7 +4,7 @@ Contributors: everpress
 Tags: googlefonts, google, fonts, gdpr  
 Requires at least: 4.2  
 Tested up to: 5.9  
-Stable tag: 0.1
+Stable tag: 0.2
 Requires PHP: 5.6+  
 License: GPLv2 or later
 Author: EverPress
@@ -38,6 +38,11 @@ more on [wptavern.com](https://wptavern.com/german-court-fines-website-owner-for
 3. Go to Settings => Google Fonts and decide which fonts should get loaded locally
 
 ## Changelog
+
+### 0.2
+
+-   show info when no font is found
+-   better handling of translated strings
 
 ### 0.1
 
