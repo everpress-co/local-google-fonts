@@ -32,13 +32,9 @@ more on [wptavern.com](https://wptavern.com/german-court-fines-website-owner-for
 
 ### 2. Automatically loads all used fonts to your server (wp-content/uploads)
 
-
 ### 3. Cleanup on plugin deactivation
 
-
 ### 4. Cleanup on plugin switch
-
-
 
 ## Installation
 
