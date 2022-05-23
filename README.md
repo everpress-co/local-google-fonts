@@ -1,10 +1,10 @@
 # Local Google Fonts
 
 Contributors: everpress  
-Tags: googlefonts, google, fonts, gdpr  
+Tags: googlefonts, google, fonts, gdpr, lgf, font, speed
 Requires at least: 4.2  
 Tested up to: 5.9  
-Stable tag: 0.2
+Stable tag: 0.3
 Requires PHP: 5.6+  
 License: GPLv2 or later
 Author: EverPress
@@ -43,6 +43,10 @@ more on [wptavern.com](https://wptavern.com/german-court-fines-website-owner-for
 3. Go to Settings => Google Fonts and decide which fonts should get loaded locally
 
 ## Changelog
+
+### 0.3
+
+-   add explanation info on settings page
 
 ### 0.2
 

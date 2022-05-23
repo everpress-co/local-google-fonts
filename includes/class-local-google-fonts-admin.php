@@ -116,9 +116,12 @@ class LGF_Admin {
 	<div class="wrap">
 	<h1><?php printf( esc_html__( _n( '%d Google font source found on your site.', '%d Google font sources found on your site.', $count, 'mailster' ) ), $count ); ?></h1>
 
-	<?php if ( ! $count ) : ?>
+	<p><?php esc_html_e( 'This page shows all discovered Google Fonts over time. If you miss a font start browsing your front end so they end up showing here.', 'local-google-fonts' ); ?></p>
+	
+		<?php if ( ! $count ) : ?>
 		<p><?php esc_html_e( 'You have currently no Google fonts in use on your site.', 'local-google-fonts' ); ?></p>
 	<?php endif; ?>
+
 	<form action="options.php" method="post">
 		<?php
 		settings_fields( 'local_google_fonts' );
