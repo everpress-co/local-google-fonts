@@ -34,30 +34,45 @@ class LGF_Admin {
 
 	public function script_styles() {
 
-		$url  = plugin_dir_url( LGF_PLUGIN_FILE ) . 'assets/admin.js';
-		$path = plugin_dir_path( LGF_PLUGIN_FILE ) . 'assets/admin.js';
+		$url  = plugin_dir_url( LGF_PLUGIN_FILE ) . 'assets';
+		$path = plugin_dir_path( LGF_PLUGIN_FILE ) . 'assets';
 
-		wp_enqueue_script( 'local-google-fonts-admin', $url, array( 'jquery' ), filemtime( $path ), true );
+		wp_enqueue_script( 'local-google-fonts-admin', $url . '/admin.js', array( 'jquery' ), filemtime( $path . '/admin.js' ), true );
+		wp_enqueue_style( 'local-google-fonts-admin', $url . '/admin.css', array(), filemtime( $path . '/admin.css' ) );
 
 	}
 
 	public function local_google_fonts_validate() {
 
-		if ( ! isset( $_POST['hostlocal'] ) ) {
-			return;
-		}
-
 		$class = LGF::get_instance();
 
-		foreach ( $_POST['hostlocal'] as $handle => $url ) {
-			$class->process_url( $url, $handle );
+		$buffer = get_option( 'local_google_fonts_buffer', array() );
+
+		if ( isset( $_POST['hostlocal'] ) ) {
+			$handle = $_POST['hostlocal'];
+			if ( isset( $buffer[ $handle ] ) ) {
+				$class->remove_set( $buffer[ $handle ]['id'] );
+				$class->process_url( $buffer[ $handle ]['src'], $handle );
+
+			}
 		}
+
+		if ( isset( $_POST['removelocal'] ) ) {
+			$handle = $_POST['removelocal'];
+			if ( isset( $buffer[ $handle ] ) ) {
+				$class->remove_set( $buffer[ $handle ]['id'] );
+			}
+		}
+
 	}
 
 	public function get_font_info( $src ) {
 
-		$params = parse_url( $src );
-		parse_str( $params['query'], $args );
+		// a bit sanitation as URLs are often registered with esc_url
+		$src = str_replace( array( '#038;', '&amp;' ), '&', $src );
+
+		$params = wp_parse_url( $src );
+		wp_parse_str( $params['query'], $args );
 		$args = wp_parse_args(
 			$args,
 			array(
@@ -76,16 +91,19 @@ class LGF_Admin {
 			if ( ! isset( $families[ $fam ] ) ) {
 				$families[ $fam ] = array( 'regular' );
 			}
-			$families[ $fam ] = array_unique( array_merge( $families[ $fam ], explode( ',', $parts[1] ) ) );
-			sort( $families[ $fam ] );
+			if ( isset( $parts[1] ) ) {
+				$variants         = $this->normalize_variants( $parts[1] );
+				$families[ $fam ] = array_unique( array_merge( $families[ $fam ], $variants ) );
+			}
 		}
 
 		foreach ( $families as $family => $variants ) {
 			$url      = 'https://google-webfonts-helper.herokuapp.com/api/fonts/';
 			$the_url  = add_query_arg(
 				array(
+					// doesn't seem to have an effect so we filter it later
 					'variants' => implode( ',', $variants ),
-					'subset'   => $args['subset'],
+					'subsets'  => $args['subset'],
 				),
 				$url . $family
 			);
@@ -93,14 +111,56 @@ class LGF_Admin {
 			$code     = wp_remote_retrieve_response_code( $response );
 
 			if ( 200 == $code ) {
-				$body       = wp_remote_retrieve_body( $response );
-				$info       = json_decode( $body );
-				$fontinfo[] = $info;
+				$body = wp_remote_retrieve_body( $response );
+				$info = json_decode( $body );
+				foreach ( $info->variants as $i => $variant ) {
+					// special case for italic 400
+					if ( 'italic' == $variant->id && in_array( '400italic', $variants ) ) {
+
+					} elseif ( ! in_array( $variant->id, $variants ) ) {
+						unset( $info->variants[ $i ] );
+					}
+				}
+				$info->variants = array_values( $info->variants );
+				$fontinfo[]     = $info;
 
 			}
 		}
 
 		return $fontinfo;
+
+	}
+
+	private function normalize_variants( $variants ) {
+		// possibles
+		// Merriweather:400,700,400italic,700italic
+		// Open+Sans:wght@400;700
+		// Open+Sans:ital,wght@0,800;1,800
+		// Open+Sans:ital,wght@0,400;0,700;1,800
+		// Google+Sans:300,300i,400,400i,500,500i,700,700i|Roboto:300,300i,400,400i,500,500i,700,700i
+
+		if ( false !== strpos( $variants, '@' ) ) {
+			$variant_parts = explode( '@', $variants );
+			$styles        = explode( ';', $variant_parts[1] );
+			$variants      = array();
+			foreach ( $styles as $style ) {
+				// regular version
+				if ( 0 === strpos( $style, '0,' ) ) {
+					$variants[] = substr( $style, 2 );
+					// italic version
+				} elseif ( 0 === strpos( $style, '1,' ) ) {
+					$variants[] = substr( $style, 2 ) . 'italic';
+				} else {
+					$variants[] = $style;
+				}
+			}
+		} else {
+			// handle XXXi variants
+			$variants = preg_replace( '/(\d{3}+)i/', '$1italic', $variants );
+			$variants = explode( ',', $variants );
+		}
+
+		return $variants;
 
 	}
 
@@ -128,9 +188,10 @@ class LGF_Admin {
 		do_settings_sections( 'local_google_fonts_section' );
 		?>
 
-		<?php foreach ( $buffer as $handle => $data ) : ?>
+		<?php foreach ( $buffer as $id => $data ) : ?>
 
-		<h2><?php esc_html_e( 'Handle', 'local-google-fonts' ); ?>: <code><?php esc_html_e( $handle ); ?></code></h2>
+		<h2><?php esc_html_e( 'Handle', 'local-google-fonts' ); ?>: <code><?php esc_html_e( $data['handle'] ); ?></code></h2>
+		<p><?php esc_html_e( 'Original URL', 'local-google-fonts' ); ?>: <code><?php echo rawurldecode( $data['src'] ); ?></code> <a href="<?php echo esc_url( $data['src'] ); ?>" class="dashicons dashicons-external" target="_blank" title="<?php esc_attr_e( 'show original URL', 'local-google-fonts' ); ?>"></a></p>
 
 	<table class="wp-list-table widefat fixed striped table-view-list ">
 		<thead>
@@ -145,24 +206,26 @@ class LGF_Admin {
 
 			<?php foreach ( $fontinfo as $i => $set ) : ?>
 			<tr>
-				<td><strong><?php echo esc_html( $set->family ); ?></strong> <br>
-					
+				<td><strong><?php echo esc_html( $set->family ); ?></strong><br>
 				</td>
 				<td>
 					<p class="code">
 					<?php foreach ( $set->variants as $variant ) : ?>
-						<?php printf( '%s %s', $variant->fontStyle, $variant->fontWeight ); ?>, 
+							<span class="variant"><?php printf( '%s %s', $variant->fontStyle, $variant->fontWeight ); ?></span> 
 					<?php endforeach ?>
 					</p>
 					<details>
 						<summary><strong><?php printf( '%d files from Google Servers', count( $set->variants ) * 5 ); ?></strong></summary>
-						<div style="max-height: 100px; overflow: scroll;font-size: small;white-space: nowrap; overflow: hidden; overflow-y: auto;" class="code">
+						<div style="max-height: 200px; overflow: scroll;font-size: small;white-space: nowrap; overflow: hidden; overflow-y: auto;" class="code">
 						<?php foreach ( $set->variants as $variant ) : ?>
+							<p>
+							<strong><?php printf( '%s %s', $variant->fontStyle, $variant->fontWeight ); ?></strong><br>
 							<code><?php echo esc_url( $variant->woff2 ); ?></code><br>
 							<code><?php echo esc_url( $variant->ttf ); ?></code><br>
 							<code><?php echo esc_url( $variant->svg ); ?></code><br>
 							<code><?php echo esc_url( $variant->eot ); ?></code><br>
-							<code><?php echo esc_url( $variant->woff ); ?></code><br>
+							<code><?php echo esc_url( $variant->woff ); ?></code>
+							</p>
 						<?php endforeach ?>
 						</div>
 					</details>
@@ -181,7 +244,10 @@ class LGF_Admin {
 		</tbody>
 	</table>		
 		<p>
-			<button class="host-locally button button-primary" name="hostlocal[<?php echo esc_attr( $handle ); ?>]" value="<?php echo esc_attr( $data['src'] ); ?>"><?php esc_html_e( 'Host locally', 'local-google-fonts' ); ?></button>
+			 <button class="host-locally button button-primary" name="hostlocal" value="<?php echo esc_attr( $data['handle'] ); ?>"><?php esc_html_e( 'Host locally', 'local-google-fonts' ); ?></button>
+			<?php if ( is_dir( $folder . '/' . $data['id'] ) ) : ?>
+			<button class="host-locally button button-link-delete" name="removelocal" value="<?php echo esc_attr( $data['handle'] ); ?>"><?php esc_html_e( 'Remove hosted files', 'local-google-fonts' ); ?></button>
+			<?php endif; ?>
 		</p>
 	<?php endforeach ?>
 	</form>

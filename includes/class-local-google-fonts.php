@@ -14,7 +14,10 @@ class LGF {
 		register_deactivation_hook( LGF_PLUGIN_FILE, array( $this, 'deactivate' ) );
 
 		add_filter( 'style_loader_src', array( $this, 'switch_stylesheet_src' ), 10, 2 );
-		add_filter( 'switch_theme', array( $this, 'clear' ), 10, 2 );
+		add_filter( 'switch_theme', array( $this, 'clear' ) );
+		add_filter( 'deactivated_plugin', array( $this, 'clear_option' ) );
+		add_filter( 'activated_plugin', array( $this, 'clear_option' ) );
+		add_filter( 'upgrader_process_complete', array( $this, 'clear_option' ) );
 
 	}
 
@@ -31,13 +34,16 @@ class LGF {
 	public function process_url( $src, $handle ) {
 
 		$id = md5( $src );
+
 		if ( ! function_exists( 'download_url' ) ) {
 			include ABSPATH . 'wp-admin/includes/file.php';
 		}
 
 		$WP_Filesystem = $this->wp_filesystem();
 
-		$style = "/* Font file served by Local Google Fonts Plugin */\n";
+		$style  = "/* Font file served by Local Google Fonts Plugin */\n";
+		$style .= '/* Created: ' . date( 'r' ) . " */\n";
+		$style .= "\n";
 
 		$urls[ $id ] = array();
 
@@ -55,6 +61,7 @@ class LGF {
 		foreach ( $fontinfo as $font ) {
 			$filename = $font->id . '-' . $font->version . '-' . $font->defSubset;
 			foreach ( $font->variants as $v ) {
+
 				$file = $filename . '-' . $v->id;
 
 				foreach ( array( 'woff', 'svg', 'woff2', 'ttf', 'eot' ) as $ext ) {
@@ -105,13 +112,17 @@ class LGF {
 		if ( ! file_exists( $new_dir ) ) {
 
 			$buffer = get_option( 'local_google_fonts_buffer' );
+
 			if ( empty( $buffer ) ) {
 				$buffer = array();
 			}
 			$buffer[ $handle ] = array(
-				'id'  => $id,
-				'src' => $src,
+				'id'        => $id,
+				'handle'    => $handle,
+				'src'       => $src,
+				'timestamp' => time(),
 			);
+
 			update_option( 'local_google_fonts_buffer', $buffer );
 
 		} else {
@@ -125,9 +136,7 @@ class LGF {
 	public function switch_stylesheet_src( $src, $handle ) {
 
 		if ( false !== strpos( $src, '//fonts.googleapis.com/css' ) ) {
-			if ( ! is_customize_preview() ) {
-				$src = $this->google_to_local_url( $src, $handle );
-			}
+			$src = $this->google_to_local_url( $src, $handle );
 		}
 		return $src;
 	}
@@ -139,8 +148,21 @@ class LGF {
 			$WP_Filesystem = $this->wp_filesystem();
 			$WP_Filesystem->delete( $folder, true );
 		}
-		delete_option( 'local_google_fonts_buffer' );
+		$this->clear_option();
 
+	}
+
+	public function clear_option() {
+		delete_option( 'local_google_fonts_buffer' );
+	}
+
+	public function remove_set( $id ) {
+		$folder = WP_CONTENT_DIR . '/uploads/fonts/' . basename( $id );
+		if ( is_dir( $folder ) ) {
+			$WP_Filesystem = $this->wp_filesystem();
+			return $WP_Filesystem->delete( $folder, true );
+		}
+		return true;
 	}
 
 	private function wp_filesystem() {
