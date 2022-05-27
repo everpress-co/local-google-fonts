@@ -46,6 +46,7 @@ more on [wptavern.com](https://wptavern.com/german-court-fines-website-owner-for
 
 ### 0.4
 
+-   you may have to reload fonts so please check the settings page
 -   improved handling of fonts
 -   only loading required font files
 -   supports now different types of variant declarations
