@@ -3,7 +3,7 @@
 Contributors: everpress  
 Tags: googlefonts, google, fonts, gdpr, lgf, font, speed
 Requires at least: 4.2  
-Tested up to: 5.9  
+Tested up to: 6.0  
 Stable tag: 0.4
 Requires PHP: 5.6+  
 License: GPLv2 or later
