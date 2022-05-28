@@ -64,6 +64,10 @@ class LGF_Admin {
 			}
 		}
 
+		if ( isset( $_POST['flush'] ) ) {
+			$class->remove_set();
+		}
+
 	}
 
 	public function get_font_info( $src ) {
@@ -250,6 +254,9 @@ class LGF_Admin {
 			<?php endif; ?>
 		</p>
 	<?php endforeach ?>
+	<p class="textright">
+		<button class="host-locally button button-link-delete" name="flush" value="1"><?php esc_html_e( 'Remove all stored data', 'local-google-fonts' ); ?></button>
+	</p>
 	</form>
 </div>
 		<?php
