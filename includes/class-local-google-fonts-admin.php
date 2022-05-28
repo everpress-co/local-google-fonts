@@ -44,6 +44,9 @@ class LGF_Admin {
 
 	public function local_google_fonts_validate() {
 
+		$folder     = WP_CONTENT_DIR . '/uploads/fonts';
+		$folder_url = WP_CONTENT_URL . '/uploads/fonts';
+
 		$class = LGF::get_instance();
 
 		$buffer = get_option( 'local_google_fonts_buffer', array() );
@@ -71,7 +74,17 @@ class LGF_Admin {
 		if ( isset( $_POST['preload'] ) ) {
 			$handle = $_POST['preload'];
 			if ( isset( $buffer[ $handle ] ) ) {
-				$buffer[ $handle ]['preload'] = true;
+
+				$id             = $buffer[ $handle ]['id'];
+				$stylesheet     = $folder . '/' . $id . '/font.css';
+				$stylesheet_url = $folder_url . '/' . $id . '/font.css';
+
+				if ( $fontinfo = $this->get_font_info( $buffer[ $handle ]['src'] ) ) {
+					foreach ( $fontinfo as $font ) {
+						$filenames                    = wp_list_pluck( $font->variants, 'filename' );
+						$buffer[ $handle ]['preload'] = array_unique( array_merge( (array) $buffer[ $handle ]['preload'], $filenames ) );
+					}
+				}
 				update_option( 'local_google_fonts_buffer', $buffer );
 			}
 		}
@@ -122,9 +135,11 @@ class LGF_Admin {
 			$code     = wp_remote_retrieve_response_code( $response );
 
 			if ( 200 == $code ) {
-				$body = wp_remote_retrieve_body( $response );
-				$info = json_decode( $body );
+				$body     = wp_remote_retrieve_body( $response );
+				$info     = json_decode( $body );
+				$filename = $info->id . '-' . $info->version . '-' . $info->defSubset;
 				foreach ( $info->variants as $i => $variant ) {
+					$info->variants[ $i ]->filename = $filename . '-' . $variant->id;
 					// special case for italic 400
 					if ( 'italic' == $variant->id && in_array( '400italic', $variants ) ) {
 
@@ -255,9 +270,9 @@ class LGF_Admin {
 		</tbody>
 	</table>		
 		<p>
-			 <button class="host-locally button button-primary" name="hostlocal" value="<?php echo esc_attr( $data['handle'] ); ?>"><?php esc_html_e( 'Host locally', 'local-google-fonts' ); ?></button>
-			 <button class="host-locally button button-secondary" name="preload" value="<?php echo esc_attr( $data['handle'] ); ?>"><?php esc_html_e( 'Preload', 'local-google-fonts' ); ?></button>
+			<button class="host-locally button button-primary" name="hostlocal" value="<?php echo esc_attr( $data['handle'] ); ?>"><?php esc_html_e( 'Host locally', 'local-google-fonts' ); ?></button>
 			<?php if ( is_dir( $folder . '/' . $data['id'] ) ) : ?>
+			<button class="host-locally button button-secondary" name="preload" value="<?php echo esc_attr( $data['handle'] ); ?>"><?php esc_html_e( 'Preload', 'local-google-fonts' ); ?></button>
 			<button class="host-locally button button-link-delete" name="removelocal" value="<?php echo esc_attr( $data['handle'] ); ?>"><?php esc_html_e( 'Remove hosted files', 'local-google-fonts' ); ?></button>
 			<?php endif; ?>
 		</p>

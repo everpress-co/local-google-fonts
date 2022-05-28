@@ -19,6 +19,7 @@ class LGF {
 		add_filter( 'activated_plugin', array( $this, 'clear_option' ) );
 
 		add_action( 'wp_head', array( $this, 'maybe_preload' ), 1 );
+		add_filter( 'wp_resource_hints', array( $this, 'remove_dns_prefetch' ), 10, 2 );
 
 	}
 
@@ -30,16 +31,45 @@ class LGF {
 		return self::$instance;
 	}
 
+	public static function remove_dns_prefetch( $urls, $relation_type ) {
+
+		if ( 'dns-prefetch' === $relation_type ) {
+			$urls = array_diff( $urls, array( 'fonts.googleapis.com' ) );
+		}
+
+		return $urls;
+	}
+
 	public function maybe_preload() {
 
 		$buffer = get_option( 'local_google_fonts_buffer', array() );
-
-		// get all fonts which should be pre loaded
-		$preload = array_filter( wp_list_pluck( $buffer, 'preload', 'handle' ) );
-
-		// example: <link rel="preload" href="font.woff2" as="font" type="font/woff2" crossorigin>
-		foreach ( $preload as $handle => $p ) {
+		if ( empty( $buffer ) ) {
+			return;
 		}
+
+		// get all fonts which should be pre-loaded
+		$preload = array_filter( wp_list_pluck( $buffer, 'preload', 'id' ) );
+
+		if ( empty( $preload ) ) {
+			return;
+		}
+
+		$folder     = WP_CONTENT_DIR . '/uploads/fonts';
+		$folder_url = WP_CONTENT_URL . '/uploads/fonts';
+
+		$cache = '';
+
+		foreach ( $preload as $id => $fonts ) {
+			$new_src = $folder_url . '/' . $id;
+			$new_dir = $folder . '/' . $id;
+			foreach ( $fonts as $name ) {
+				if ( file_exists( $new_dir . '/' . $name . '.woff2' ) ) {
+					$cache .= '<link rel="preload" href="' . esc_url( $new_src . '/' . $name . '.woff2' ) . '" as="font" type="font/woff2" crossorigin>' . "\n";
+				}
+			}
+		}
+
+		echo $cache;
 
 	}
 
@@ -75,7 +105,7 @@ class LGF {
 			$filename = $font->id . '-' . $font->version . '-' . $font->defSubset;
 			foreach ( $font->variants as $v ) {
 
-				$file = $filename . '-' . $v->id;
+				$file = $v->filename;
 
 				foreach ( array( 'woff', 'svg', 'woff2', 'ttf', 'eot' ) as $ext ) {
 
@@ -132,7 +162,7 @@ class LGF {
 				'id'      => $id,
 				'handle'  => $handle,
 				'src'     => $src,
-				'preload' => false,
+				'preload' => array(),
 			);
 
 			if ( ! isset( $buffer[ $handle ] ) ) {
