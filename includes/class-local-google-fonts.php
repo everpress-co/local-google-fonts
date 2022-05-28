@@ -17,7 +17,6 @@ class LGF {
 		add_filter( 'switch_theme', array( $this, 'clear' ) );
 		add_filter( 'deactivated_plugin', array( $this, 'clear_option' ) );
 		add_filter( 'activated_plugin', array( $this, 'clear_option' ) );
-		add_filter( 'upgrader_process_complete', array( $this, 'clear_option' ) );
 
 	}
 
@@ -107,26 +106,21 @@ class LGF {
 		$folder     = WP_CONTENT_DIR . '/uploads/fonts';
 		$folder_url = WP_CONTENT_URL . '/uploads/fonts';
 
-		$new_dir = $folder . '/' . $id . '/font.css';
+		$stylesheet     = $folder . '/' . $id . '/font.css';
+		$stylesheet_url = $folder_url . '/' . $id . '/font.css';
+		$buffer = get_option( 'local_google_fonts_buffer', array() );
 
-		if ( ! file_exists( $new_dir ) ) {
+		if ( file_exists( $stylesheet ) ) {
+			$src = add_query_arg( 'v', filemtime( $stylesheet ), $stylesheet_url );
+		} else {
 
-			$buffer = get_option( 'local_google_fonts_buffer' );
-
-			if ( empty( $buffer ) ) {
-				$buffer = array();
-			}
 			$buffer[ $handle ] = array(
 				'id'        => $id,
 				'handle'    => $handle,
 				'src'       => $src,
-				'timestamp' => time(),
 			);
 
 			update_option( 'local_google_fonts_buffer', $buffer );
-
-		} else {
-			$src = add_query_arg( 'v', filemtime( $new_dir ), $folder_url . '/' . $id . '/font.css' );
 		}
 
 		return $src;

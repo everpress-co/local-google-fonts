@@ -65,7 +65,7 @@ class LGF_Admin {
 		}
 
 		if ( isset( $_POST['flush'] ) ) {
-			$class->remove_set();
+			$class->clear();
 		}
 
 	}
