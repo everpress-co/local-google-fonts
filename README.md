@@ -42,6 +42,20 @@ more on [wptavern.com](https://wptavern.com/german-court-fines-website-owner-for
 2. Activate the plugin through the 'Plugins' menu in WordPress
 3. Go to Settings => Google Fonts and decide which fonts should get loaded locally
 
+## Frequently Asked Questions
+
+### Will this load Google Fonts automatically?
+
+No, each font set must be manually triggered. Automatic loading of assets from a third party server is forbidden by the [plugin guidelines](https://developer.wordpress.org/plugins/wordpress-org/detailed-plugin-guidelines/)
+
+### My fonts do not show up on the settings page, what can I do?
+
+Fonts are discovered once they are used. Try to browser your front end first and get back to the settings page.
+
+### My fonts are not replaced, what can I do?
+
+The plugin currently only checks fonts embedded via `wp_enqueue_style` if you use Google fonts via `@import` you have to change that first.
+
 ## Changelog
 
 ### 0.5
