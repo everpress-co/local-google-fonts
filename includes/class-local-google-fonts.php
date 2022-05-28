@@ -156,8 +156,11 @@ class LGF {
 		delete_option( 'local_google_fonts_buffer' );
 	}
 
-	public function remove_set( $id ) {
-		$folder = WP_CONTENT_DIR . '/uploads/fonts/' . basename( $id );
+	public function remove_set( $id = null ) {
+		$folder = WP_CONTENT_DIR . '/uploads/fonts';
+		if ( ! is_null( $id ) ) {
+			$folder .= '/' . basename( $id );
+		}
 		if ( is_dir( $folder ) ) {
 			$WP_Filesystem = $this->wp_filesystem();
 			return $WP_Filesystem->delete( $folder, true );
