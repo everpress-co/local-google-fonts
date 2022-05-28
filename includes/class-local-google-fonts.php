@@ -18,6 +18,8 @@ class LGF {
 		add_filter( 'deactivated_plugin', array( $this, 'clear_option' ) );
 		add_filter( 'activated_plugin', array( $this, 'clear_option' ) );
 
+		add_action( 'wp_head', array( $this, 'maybe_preload' ), 1 );
+
 	}
 
 	public static function get_instance() {
@@ -28,6 +30,18 @@ class LGF {
 		return self::$instance;
 	}
 
+	public function maybe_preload() {
+
+		$buffer = get_option( 'local_google_fonts_buffer', array() );
+
+		// get all fonts which should be pre loaded
+		$preload = array_filter( wp_list_pluck( $buffer, 'preload', 'handle' ) );
+
+		// example: <link rel="preload" href="font.woff2" as="font" type="font/woff2" crossorigin>
+		foreach ( $preload as $handle => $p ) {
+		}
+
+	}
 
 
 	public function process_url( $src, $handle ) {
@@ -108,17 +122,23 @@ class LGF {
 
 		$stylesheet     = $folder . '/' . $id . '/font.css';
 		$stylesheet_url = $folder_url . '/' . $id . '/font.css';
-		$buffer = get_option( 'local_google_fonts_buffer', array() );
+		$buffer         = get_option( 'local_google_fonts_buffer', array() );
 
 		if ( file_exists( $stylesheet ) ) {
 			$src = add_query_arg( 'v', filemtime( $stylesheet ), $stylesheet_url );
 		} else {
 
-			$buffer[ $handle ] = array(
-				'id'        => $id,
-				'handle'    => $handle,
-				'src'       => $src,
+			$args = array(
+				'id'      => $id,
+				'handle'  => $handle,
+				'src'     => $src,
+				'preload' => false,
 			);
+
+			if ( ! isset( $buffer[ $handle ] ) ) {
+				$buffer[ $handle ] = array();
+			}
+			$buffer[ $handle ] = wp_parse_args( $buffer[ $handle ], $args );
 
 			update_option( 'local_google_fonts_buffer', $buffer );
 		}

@@ -68,6 +68,13 @@ class LGF_Admin {
 			$class->clear();
 		}
 
+		if ( isset( $_POST['preload'] ) ) {
+			$handle = $_POST['preload'];
+			if ( isset( $buffer[ $handle ] ) ) {
+				$buffer[ $handle ]['preload'] = true;
+				update_option( 'local_google_fonts_buffer', $buffer );
+			}
+		}
 	}
 
 	public function get_font_info( $src ) {
@@ -249,6 +256,7 @@ class LGF_Admin {
 	</table>		
 		<p>
 			 <button class="host-locally button button-primary" name="hostlocal" value="<?php echo esc_attr( $data['handle'] ); ?>"><?php esc_html_e( 'Host locally', 'local-google-fonts' ); ?></button>
+			 <button class="host-locally button button-secondary" name="preload" value="<?php echo esc_attr( $data['handle'] ); ?>"><?php esc_html_e( 'Preload', 'local-google-fonts' ); ?></button>
 			<?php if ( is_dir( $folder . '/' . $data['id'] ) ) : ?>
 			<button class="host-locally button button-link-delete" name="removelocal" value="<?php echo esc_attr( $data['handle'] ); ?>"><?php esc_html_e( 'Remove hosted files', 'local-google-fonts' ); ?></button>
 			<?php endif; ?>
