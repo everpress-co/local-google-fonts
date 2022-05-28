@@ -48,6 +48,10 @@ more on [wptavern.com](https://wptavern.com/german-court-fines-website-owner-for
 
 No, each font set must be manually triggered. Automatic loading of assets from a third party server is forbidden by the [plugin guidelines](https://developer.wordpress.org/plugins/wordpress-org/detailed-plugin-guidelines/)
 
+### Is it Legal to Self-Host Google Fonts?
+
+Yes. The open source fonts from Google Fonts are published under a licenses that allow you to use them on any website, no matter if it’s commercial or personal.
+
 ### My fonts do not show up on the settings page, what can I do?
 
 Fonts are discovered once they are used. Try to browser your front end first and get back to the settings page.
