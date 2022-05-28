@@ -28,8 +28,6 @@ more on [wptavern.com](https://wptavern.com/german-court-fines-website-owner-for
 
 ### 1. Quick install (activate, setup and forget)
 
-![Quick install (activate, setup and forget)](https://ps.w.org/local-google-fonts/assets/screenshot-1.png)
-
 ### 2. Automatically loads all used fonts to your server (wp-content/uploads)
 
 ### 3. Cleanup on plugin deactivation
