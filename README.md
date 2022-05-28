@@ -46,7 +46,7 @@ more on [wptavern.com](https://wptavern.com/german-court-fines-website-owner-for
 
 ### Will this load Google Fonts automatically?
 
-No, each font set must be manually triggered. Automatic loading of assets from a third party server is forbidden by the [plugin guidelines](https://developer.wordpress.org/plugins/wordpress-org/detailed-plugin-guidelines/)
+No, each font set must be manually triggered. Automatic loading of assets from a third party server is forbidden by the [plugin guidelines](https://developer.wordpress.org/plugins/wordpress-org/detailed-plugin-guidelines/).
 
 ### Is it Legal to Self-Host Google Fonts?
 
@@ -54,11 +54,11 @@ Yes. The open source fonts from Google Fonts are published under a licenses that
 
 ### My fonts do not show up on the settings page, what can I do?
 
-Fonts are discovered once they are used. Try to browser your front end first and get back to the settings page.
+Fonts are discovered once they are used. Try to browse your front end first and get back to the settings page.
 
 ### My fonts are not replaced, what can I do?
 
-The plugin currently only checks fonts embedded via `wp_enqueue_style` if you use Google fonts via `@import` you have to change that first.
+The plugin currently only checks fonts embedded via [`wp_enqueue_style`](https://developer.wordpress.org/reference/functions/wp_enqueue_style/) if you use Google fonts via `@import` you have to change that first.
 
 ## Changelog
 
