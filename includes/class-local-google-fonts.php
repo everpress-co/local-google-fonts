@@ -55,13 +55,23 @@ class LGF {
 
 		$WP_Filesystem = $this->wp_filesystem();
 
-		$style  = "/* Font file served by Local Google Fonts Plugin */\n";
-		$style .= '/* Created: ' . date( 'r' ) . " */\n";
-		$style .= "\n";
+		$plugin_data = get_plugin_data( LGF_PLUGIN_FILE );
 
-		$urls[ $id ] = array();
+		$style  = "/*\n";
+		$style .= ' * ' . sprintf( 'Font file created by %s %s', $plugin_data['Name'], $plugin_data['Version'] ) . "\n";
+		$style .= ' * Created: ' . date( 'r' ) . "\n";
+		$style .= ' * Handle: ' . esc_attr( $handle ) . "\n";
+		$style .= "*/\n\n";
 
-		$fontDisplay = 'fallback';
+		$query = wp_parse_url( $src, PHP_URL_QUERY );
+		wp_parse_str( $query, $args );
+		$args = wp_parse_args(
+			$args,
+			array(
+				'subset'  => null,
+				'display' => 'fallback',
+			)
+		);
 
 		$folder     = WP_CONTENT_DIR . '/uploads/fonts';
 		$folder_url = WP_CONTENT_URL . '/uploads/fonts';
@@ -89,19 +99,20 @@ class LGF {
 					$WP_Filesystem->delete( $tmp_file );
 
 				}
-
 				$style .= "@font-face {\n";
 				$style .= "\tfont-family: " . $v->fontFamily . ";\n";
 				$style .= "\tfont-style: " . $v->fontStyle . ";\n";
 				$style .= "\tfont-weight: " . $v->fontWeight . ";\n";
-				$style .= "\tfont-display: " . $fontDisplay . ";\n";
+				if ( $args['display'] && $args['display'] !== 'auto' ) {
+					$style .= "\tfont-display: " . $args['display'] . ";\n";
+				}
 				$style .= "\tsrc: url('" . $file . ".eot');\n";
 				$style .= "\tsrc: local(''),\n";
 				$style .= "\t     url('" . $file . ".eot?#iefix') format('embedded-opentype'),\n";
 				$style .= "\t     url('" . $file . ".woff2') format('woff2'),\n";
 				$style .= "\t     url('" . $file . ".woff') format('woff'),\n";
 				$style .= "\t     url('" . $file . ".ttf') format('truetype'),\n";
-				$style .= "\t     url('" . $file . '.svg#' . $v->id . "') format('svg');\n";
+				$style .= "\t     url('" . $file . '.svg' . strrchr( $v->svg, '#' ) . "') format('svg');\n";
 				$style .= "}\n\n";
 
 			}
