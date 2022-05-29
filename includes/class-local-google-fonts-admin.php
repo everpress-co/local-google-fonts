@@ -65,7 +65,7 @@ class LGF_Admin {
 		}
 
 		if ( isset( $_POST['flush'] ) ) {
-			$class->remove_set();
+			$class->clear();
 		}
 
 	}
@@ -75,8 +75,8 @@ class LGF_Admin {
 		// a bit sanitation as URLs are often registered with esc_url
 		$src = str_replace( array( '#038;', '&amp;' ), '&', $src );
 
-		$params = wp_parse_url( $src );
-		wp_parse_str( $params['query'], $args );
+		$query = wp_parse_url( $src, PHP_URL_QUERY );
+		wp_parse_str( $query, $args );
 		$args = wp_parse_args(
 			$args,
 			array(
@@ -102,21 +102,32 @@ class LGF_Admin {
 		}
 
 		foreach ( $families as $family => $variants ) {
-			$url      = 'https://google-webfonts-helper.herokuapp.com/api/fonts/';
-			$the_url  = add_query_arg(
+			$url     = 'https://google-webfonts-helper.herokuapp.com/api/fonts/';
+			$the_url = add_query_arg(
 				array(
 					// doesn't seem to have an effect so we filter it later
-					'variants' => implode( ',', $variants ),
-					'subsets'  => $args['subset'],
+					// 'variants' => implode( ',', $variants ),
+					'subsets' => $args['subset'],
 				),
 				$url . $family
 			);
-			$response = wp_remote_get( $the_url );
-			$code     = wp_remote_retrieve_response_code( $response );
 
-			if ( 200 == $code ) {
-				$body = wp_remote_retrieve_body( $response );
-				$info = json_decode( $body );
+			$transient_key = 'lcg_' . md5( $the_url );
+			if ( false === ( $info = get_transient( $transient_key ) ) ) {
+				$response = wp_remote_get( $the_url );
+				$code     = wp_remote_retrieve_response_code( $response );
+				if ( 200 === $code ) {
+					$body = wp_remote_retrieve_body( $response );
+					$info = json_decode( $body );
+					set_transient( $transient_key, $info, HOUR_IN_SECONDS );
+				} else {
+					continue;
+				}
+			}
+
+			// if only regular is present we actually need all of them
+			if ( count( $variants ) > 1 ) {
+
 				foreach ( $info->variants as $i => $variant ) {
 					// special case for italic 400
 					if ( 'italic' == $variant->id && in_array( '400italic', $variants ) ) {
@@ -125,10 +136,11 @@ class LGF_Admin {
 						unset( $info->variants[ $i ] );
 					}
 				}
-				$info->variants = array_values( $info->variants );
-				$fontinfo[]     = $info;
-
 			}
+
+			$info->variants = array_values( $info->variants );
+			$fontinfo[]     = $info;
+
 		}
 
 		return $fontinfo;

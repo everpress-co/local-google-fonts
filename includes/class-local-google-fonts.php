@@ -17,7 +17,7 @@ class LGF {
 		add_filter( 'switch_theme', array( $this, 'clear' ) );
 		add_filter( 'deactivated_plugin', array( $this, 'clear_option' ) );
 		add_filter( 'activated_plugin', array( $this, 'clear_option' ) );
-		add_filter( 'upgrader_process_complete', array( $this, 'clear_option' ) );
+		add_filter( 'wp_resource_hints', array( $this, 'remove_dns_prefetch' ), 10, 2 );
 
 	}
 
@@ -29,6 +29,20 @@ class LGF {
 		return self::$instance;
 	}
 
+	public static function remove_dns_prefetch( $urls, $relation_type ) {
+
+		if ( 'dns-prefetch' === $relation_type ) {
+			$urls = array_diff( $urls, array( 'fonts.googleapis.com' ) );
+		} elseif ( 'preconnect' === $relation_type ) {
+			foreach ( $urls as $key => $url ) {
+				if ( false !== strpos( $url['href'], '//fonts.gstatic.com' ) ) {
+					unset( $urls[ $key ] );
+				}
+			}
+		}
+
+		return $urls;
+	}
 
 
 	public function process_url( $src, $handle ) {
@@ -41,13 +55,23 @@ class LGF {
 
 		$WP_Filesystem = $this->wp_filesystem();
 
-		$style  = "/* Font file served by Local Google Fonts Plugin */\n";
-		$style .= '/* Created: ' . date( 'r' ) . " */\n";
-		$style .= "\n";
+		$plugin_data = get_plugin_data( LGF_PLUGIN_FILE );
 
-		$urls[ $id ] = array();
+		$style  = "/*\n";
+		$style .= ' * ' . sprintf( 'Font file created by %s %s', $plugin_data['Name'], $plugin_data['Version'] ) . "\n";
+		$style .= ' * Created: ' . date( 'r' ) . "\n";
+		$style .= ' * Handle: ' . esc_attr( $handle ) . "\n";
+		$style .= "*/\n\n";
 
-		$fontDisplay = 'fallback';
+		$query = wp_parse_url( $src, PHP_URL_QUERY );
+		wp_parse_str( $query, $args );
+		$args = wp_parse_args(
+			$args,
+			array(
+				'subset'  => null,
+				'display' => 'fallback',
+			)
+		);
 
 		$folder     = WP_CONTENT_DIR . '/uploads/fonts';
 		$folder_url = WP_CONTENT_URL . '/uploads/fonts';
@@ -75,19 +99,20 @@ class LGF {
 					$WP_Filesystem->delete( $tmp_file );
 
 				}
-
 				$style .= "@font-face {\n";
 				$style .= "\tfont-family: " . $v->fontFamily . ";\n";
 				$style .= "\tfont-style: " . $v->fontStyle . ";\n";
 				$style .= "\tfont-weight: " . $v->fontWeight . ";\n";
-				$style .= "\tfont-display: " . $fontDisplay . ";\n";
+				if ( $args['display'] && $args['display'] !== 'auto' ) {
+					$style .= "\tfont-display: " . $args['display'] . ";\n";
+				}
 				$style .= "\tsrc: url('" . $file . ".eot');\n";
 				$style .= "\tsrc: local(''),\n";
 				$style .= "\t     url('" . $file . ".eot?#iefix') format('embedded-opentype'),\n";
 				$style .= "\t     url('" . $file . ".woff2') format('woff2'),\n";
 				$style .= "\t     url('" . $file . ".woff') format('woff'),\n";
 				$style .= "\t     url('" . $file . ".ttf') format('truetype'),\n";
-				$style .= "\t     url('" . $file . '.svg#' . $v->id . "') format('svg');\n";
+				$style .= "\t     url('" . $file . '.svg' . strrchr( $v->svg, '#' ) . "') format('svg');\n";
 				$style .= "}\n\n";
 
 			}
@@ -95,7 +120,7 @@ class LGF {
 
 		$WP_Filesystem->put_contents( $new_dir, $style );
 
-		return $new_src !== $src;
+		return $new_src;
 
 	}
 
@@ -107,26 +132,21 @@ class LGF {
 		$folder     = WP_CONTENT_DIR . '/uploads/fonts';
 		$folder_url = WP_CONTENT_URL . '/uploads/fonts';
 
-		$new_dir = $folder . '/' . $id . '/font.css';
+		$stylesheet     = $folder . '/' . $id . '/font.css';
+		$stylesheet_url = $folder_url . '/' . $id . '/font.css';
+		$buffer         = get_option( 'local_google_fonts_buffer', array() );
 
-		if ( ! file_exists( $new_dir ) ) {
+		if ( file_exists( $stylesheet ) ) {
+			$src = add_query_arg( 'v', filemtime( $stylesheet ), $stylesheet_url );
+		} else {
 
-			$buffer = get_option( 'local_google_fonts_buffer' );
-
-			if ( empty( $buffer ) ) {
-				$buffer = array();
-			}
 			$buffer[ $handle ] = array(
-				'id'        => $id,
-				'handle'    => $handle,
-				'src'       => $src,
-				'timestamp' => time(),
+				'id'     => $id,
+				'handle' => $handle,
+				'src'    => $src,
 			);
 
 			update_option( 'local_google_fonts_buffer', $buffer );
-
-		} else {
-			$src = add_query_arg( 'v', filemtime( $new_dir ), $folder_url . '/' . $id . '/font.css' );
 		}
 
 		return $src;
