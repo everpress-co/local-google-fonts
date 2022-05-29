@@ -17,6 +17,7 @@ class LGF {
 		add_filter( 'switch_theme', array( $this, 'clear' ) );
 		add_filter( 'deactivated_plugin', array( $this, 'clear_option' ) );
 		add_filter( 'activated_plugin', array( $this, 'clear_option' ) );
+		add_filter( 'wp_resource_hints', array( $this, 'remove_dns_prefetch' ), 10, 2 );
 
 	}
 
@@ -28,6 +29,20 @@ class LGF {
 		return self::$instance;
 	}
 
+	public static function remove_dns_prefetch( $urls, $relation_type ) {
+
+		if ( 'dns-prefetch' === $relation_type ) {
+			$urls = array_diff( $urls, array( 'fonts.googleapis.com' ) );
+		} elseif ( 'preconnect' === $relation_type ) {
+			foreach ( $urls as $key => $url ) {
+				if ( false !== strpos( $url['href'], '//fonts.gstatic.com' ) ) {
+					unset( $urls[ $key ] );
+				}
+			}
+		}
+
+		return $urls;
+	}
 
 
 	public function process_url( $src, $handle ) {
@@ -94,7 +109,7 @@ class LGF {
 
 		$WP_Filesystem->put_contents( $new_dir, $style );
 
-		return $new_src !== $src;
+		return $new_src;
 
 	}
 
@@ -108,16 +123,16 @@ class LGF {
 
 		$stylesheet     = $folder . '/' . $id . '/font.css';
 		$stylesheet_url = $folder_url . '/' . $id . '/font.css';
-		$buffer = get_option( 'local_google_fonts_buffer', array() );
+		$buffer         = get_option( 'local_google_fonts_buffer', array() );
 
 		if ( file_exists( $stylesheet ) ) {
 			$src = add_query_arg( 'v', filemtime( $stylesheet ), $stylesheet_url );
 		} else {
 
 			$buffer[ $handle ] = array(
-				'id'        => $id,
-				'handle'    => $handle,
-				'src'       => $src,
+				'id'     => $id,
+				'handle' => $handle,
+				'src'    => $src,
 			);
 
 			update_option( 'local_google_fonts_buffer', $buffer );
