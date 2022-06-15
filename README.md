@@ -4,7 +4,7 @@ Contributors: everpress
 Tags: googlefonts, google, fonts, gdpr, lgf, font, speed
 Requires at least: 4.2  
 Tested up to: 6.0  
-Stable tag: 0.6
+Stable tag: 0.7
 Requires PHP: 5.6+  
 License: GPLv2 or later
 Author: EverPress
@@ -59,6 +59,10 @@ Fonts are discovered once they are used. Try to browse your front end first and 
 The plugin currently only checks fonts embedded via [`wp_enqueue_style`](https://developer.wordpress.org/reference/functions/wp_enqueue_style/) if you use Google fonts via `@import` you have to change that first.
 
 ## Changelog
+
+### 0.7
+
+-   better handling of multiple "family" arguments in the URL
 
 ### 0.6
 

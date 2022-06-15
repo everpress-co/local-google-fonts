@@ -77,6 +77,20 @@ class LGF_Admin {
 
 		$query = wp_parse_url( $src, PHP_URL_QUERY );
 		wp_parse_str( $query, $args );
+
+		// handling of multiple "family" arguments
+		$parts  = explode( '&', $query );
+		$groups = array();
+		foreach ( $parts as $part ) {
+			if ( 0 === strpos( $part, 'family=' ) ) {
+				$groups[] = str_replace( 'family=', '', $part );
+			}
+		}
+
+		if ( ! empty( $groups ) ) {
+			$args['family'] = rawurldecode( implode( '|', $groups ) );
+		}
+
 		$args = wp_parse_args(
 			$args,
 			array(

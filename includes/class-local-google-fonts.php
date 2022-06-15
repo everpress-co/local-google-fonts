@@ -19,6 +19,9 @@ class LGF {
 		add_filter( 'activated_plugin', array( $this, 'clear_option' ) );
 		add_filter( 'wp_resource_hints', array( $this, 'remove_dns_prefetch' ), 10, 2 );
 
+		add_filter( 'local_google_fonts_replace_in_content', array( $this, 'replace_in_content' ) );
+		add_filter( 'local_google_fonts_replace_url', array( $this, 'google_to_local_url' ), 10, 2 );
+
 	}
 
 	public static function get_instance() {
@@ -125,7 +128,27 @@ class LGF {
 	}
 
 
-	public function google_to_local_url( $src, $handle ) {
+	public function replace_in_content( $content ) {
+
+		if ( false !== strpos( $content, '//fonts.googleapis.com/css' ) ) {
+
+			$regex = "/\b(?:(?:https?):\/\/fonts\.googleapis\.com\/css)[-a-z0-9+&@#\/%?=~_|!:,.;]*[-a-z0-9+&@#\/%=~_|]/i";
+
+			if ( $urls = preg_match_all( $regex, $content, $matches ) ) {
+				foreach ( $matches[0] as $i => $url ) {
+					$local_url = $this->google_to_local_url( $url );
+					if ( $local_url != $url ) {
+						$content = str_replace( $url, $local_url, $content );
+					}
+				}
+			}
+		}
+
+		return $content;
+	}
+
+
+	public function google_to_local_url( $src, $handle = null ) {
 
 		$id = md5( $src );
 
@@ -139,6 +162,10 @@ class LGF {
 		if ( file_exists( $stylesheet ) ) {
 			$src = add_query_arg( 'v', filemtime( $stylesheet ), $stylesheet_url );
 		} else {
+
+			if ( is_null( $handle ) ) {
+				$handle = $id;
+			}
 
 			$buffer[ $handle ] = array(
 				'id'     => $id,
