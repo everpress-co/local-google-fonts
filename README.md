@@ -1,6 +1,6 @@
 # Local Google Fonts
 
-Contributors: everpress  
+Contributors: everpress, xaverb
 Tags: googlefonts, google, fonts, gdpr, lgf, font, speed
 Requires at least: 4.6  
 Tested up to: 6.0  
