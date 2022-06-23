@@ -12,7 +12,7 @@ Author URI: https://everpress.co
 
 ## Description
 
-Host your used Google fonts on your server and make your site more GDPR compliant.
+Host your used Google fonts on your server and make your site more GDPR compliant 💯.
 
 About 50 mio[\*](https://trends.builtwith.com/websitelist/Google-Font-API) sites use Google Fonts and in January 2022 a German court has ruled that using Google Fonts is a violation of Europe’s GDPR (General Data Protection Regulation).
 
