@@ -15,8 +15,6 @@ class LGF {
 
 		add_filter( 'style_loader_src', array( $this, 'switch_stylesheet_src' ), 10, 2 );
 		add_filter( 'switch_theme', array( $this, 'clear' ) );
-		add_filter( 'deactivated_plugin', array( $this, 'clear_option' ) );
-		add_filter( 'activated_plugin', array( $this, 'clear_option' ) );
 		add_filter( 'wp_resource_hints', array( $this, 'remove_dns_prefetch' ), 10, 2 );
 
 		add_filter( 'local_google_fonts_replace_in_content', array( $this, 'replace_in_content' ) );

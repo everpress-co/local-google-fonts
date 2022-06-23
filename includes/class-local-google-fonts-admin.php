@@ -15,7 +15,7 @@ class LGF_Admin {
 	}
 
 	public static function get_instance() {
-		if ( self::$instance == null ) {
+		if ( self::$instance === null ) {
 			self::$instance = new LGF_Admin();
 		}
 
@@ -204,7 +204,7 @@ class LGF_Admin {
 
 		?>
 	<div class="wrap">
-	<h1><?php printf( esc_html__( _n( '%d Google font source found on your site.', '%d Google font sources found on your site.', $count, 'mailster' ) ), $count ); ?></h1>
+	<h1><?php printf( esc_html__( _n( '%d Google font source found on your site.', '%d Google font sources found on your site.', $count, 'local-google-font' ) ), $count ); ?></h1>
 
 	<p><?php esc_html_e( 'This page shows all discovered Google Fonts over time. If you miss a font start browsing your front end so they end up showing here.', 'local-google-fonts' ); ?></p>
 	
@@ -262,9 +262,9 @@ class LGF_Admin {
 				</td>
 				<td>
 					<?php if ( is_dir( $folder . '/' . $data['id'] ) ) : ?>
-						<strong class="">✔</strong> loaded, served from your server
+						<?php printf( '%s %s', '<strong>✔</strong>', esc_html__( 'loaded, served from your server', 'local-google-fonts' ) ); ?>
 					<?php else : ?>
-						<strong class="wp-ui-text-notification">✕</strong> not loaded, served from Google servers
+						<?php printf( '%s %s', '<strong class="wp-ui-text-notification">✕</strong>', esc_html__( 'not loaded, served from Google servers', 'local-google-fonts' ) ); ?>
 					<?php endif; ?>
 				
 				</td>
