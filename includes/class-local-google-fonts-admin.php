@@ -245,7 +245,7 @@ class LGF_Admin {
 					<?php endforeach ?>
 					</p>
 					<details>
-						<summary><strong><?php printf( '%d files from Google Servers', count( $set->variants ) * 5 ); ?></strong></summary>
+						<summary><strong><?php printf( esc_html_e( '%d files from Google Servers', 'local-google-fonts' ), count( $set->variants ) * 5 ); ?></strong></summary>
 						<div style="max-height: 200px; overflow: scroll;font-size: small;white-space: nowrap; overflow: hidden; overflow-y: auto;" class="code">
 						<?php foreach ( $set->variants as $variant ) : ?>
 							<p>
