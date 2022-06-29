@@ -23,7 +23,12 @@ class LGF_Admin {
 	}
 
 	public function register_settings() {
-		register_setting( 'local_google_fonts', 'local_google_fonts', array( $this, 'local_google_fonts_validate' ) );
+
+		register_setting( 'local_google_fonts_settings_page', 'local_google_fonts', array( $this, 'local_google_fonts_validate' ) );
+
+		add_settings_section( 'default', '', '', 'local_google_fonts_settings_page' );
+
+		add_settings_field( 'auto_load', __( 'Autoload', 'local-google-fonts' ), array( $this, 'auto_load_cb' ), 'local_google_fonts_settings_page', 'default' );
 	}
 
 	public function settings_page() {
@@ -42,7 +47,7 @@ class LGF_Admin {
 
 	}
 
-	public function local_google_fonts_validate() {
+	public function local_google_fonts_validate( $options ) {
 
 		$class = LGF::get_instance();
 
@@ -68,7 +73,129 @@ class LGF_Admin {
 			$class->clear();
 		}
 
+		return $options;
+
 	}
+
+	public function auto_load_cb( $args ) {
+
+		$options = get_option( 'local_google_fonts' );
+		$checked = isset( $options['auto_load'] );
+		?>
+		<p>
+			<label><input type="checkbox" value="1" name="local_google_fonts[auto_load]" <?php checked( $checked ); ?>>
+				<?php esc_html_e( 'Load Fonts automatically', 'local-google-fonts' ); ?>
+			</label>
+		</p>
+		<p class="description">
+			<?php esc_html_e( 'If you check this option discovered fonts will get loaded automatically.', 'local-google-fonts' ); ?>
+		</p>
+		<?php
+	}
+	public function render_settings() {
+		// check user capabilities
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		$buffer = get_option( 'local_google_fonts_buffer', array() );
+
+		$folder     = WP_CONTENT_DIR . '/uploads/fonts';
+		$folder_url = WP_CONTENT_URL . '/uploads/fonts';
+		$count      = count( $buffer );
+
+		if ( ! $count ) :
+			add_settings_error( 'local_google_fonts_messages', 'local_google_fonts_message', __( 'You have currently no Google fonts in use on your site.', 'local-google-fonts' ) );
+		endif;
+		settings_errors( 'local_google_fonts_messages' );
+		?>
+		<div class="wrap">
+			<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
+
+			<form action="options.php" method="post">
+			<?php
+			settings_fields( 'local_google_fonts_settings_page' );
+			do_settings_sections( 'local_google_fonts_settings_page' );
+
+			?>
+			<?php submit_button(); ?>
+			
+		<hr>
+		<h2><?php printf( esc_html__( _n( '%d Google font source found on your site.', '%d Google font sources found on your site.', $count, 'local-google-font' ) ), $count ); ?></h2>
+
+		<p><?php esc_html_e( 'This page shows all discovered Google Fonts over time. If you miss a font start browsing your front end so they end up showing here.', 'local-google-fonts' ); ?></p>
+
+			<?php foreach ( $buffer as $id => $data ) : ?>
+
+		<h3><?php esc_html_e( 'Handle', 'local-google-fonts' ); ?>: <code><?php esc_html_e( $data['handle'] ); ?></code></h3>
+		<p><?php esc_html_e( 'Original URL', 'local-google-fonts' ); ?>: <code><?php echo rawurldecode( $data['src'] ); ?></code> <a href="<?php echo esc_url( $data['src'] ); ?>" class="dashicons dashicons-external" target="_blank" title="<?php esc_attr_e( 'show original URL', 'local-google-fonts' ); ?>"></a></p>
+
+		<table class="wp-list-table widefat fixed striped table-view-list ">
+			<thead>
+				<tr>
+					<th scope="col" id="name" class="manage-column column-name column-primary" style="width: 150px"><?php esc_html_e( 'Name', 'local-google-fonts' ); ?></th>
+					<th scope="col" id="description" class="manage-column column-description"><?php esc_html_e( 'Variants', 'local-google-fonts' ); ?></th>
+					<th scope="col" id="auto-updates" class="manage-column column-auto-updates"  style="width: 250px"><?php esc_html_e( 'Status', 'local-google-fonts' ); ?></th>
+				</tr>
+			</thead>
+			<tbody>
+				<?php $fontinfo = $this->get_font_info( $data['src'] ); ?>
+
+				<?php foreach ( $fontinfo as $i => $set ) : ?>
+				<tr>
+					<td><strong><?php echo esc_html( $set->family ); ?></strong><br>
+					</td>
+					<td>
+						<p class="code">
+						<?php foreach ( $set->variants as $variant ) : ?>
+								<span class="variant"><?php printf( '%s %s', $variant->fontStyle, $variant->fontWeight ); ?></span> 
+						<?php endforeach ?>
+						</p>
+						<details>
+							<summary><strong><?php printf( '%d files from Google Servers', count( $set->variants ) * 5 ); ?></strong></summary>
+							<div style="max-height: 200px; overflow: scroll;font-size: small;white-space: nowrap; overflow: hidden; overflow-y: auto;" class="code">
+							<?php foreach ( $set->variants as $variant ) : ?>
+								<p>
+								<strong><?php printf( '%s %s', $variant->fontStyle, $variant->fontWeight ); ?></strong><br>
+								<code><?php echo esc_url( $variant->woff2 ); ?></code><br>
+								<code><?php echo esc_url( $variant->ttf ); ?></code><br>
+								<code><?php echo esc_url( $variant->svg ); ?></code><br>
+								<code><?php echo esc_url( $variant->eot ); ?></code><br>
+								<code><?php echo esc_url( $variant->woff ); ?></code>
+								</p>
+							<?php endforeach ?>
+							</div>
+						</details>
+					</td>
+					<td>
+						<?php if ( is_dir( $folder . '/' . $data['id'] ) ) : ?>
+							<?php printf( '%s %s', '<strong>✔</strong>', esc_html__( 'loaded, served from your server', 'local-google-fonts' ) ); ?>
+						<?php else : ?>
+							<?php printf( '%s %s', '<strong class="wp-ui-text-notification">✕</strong>', esc_html__( 'not loaded, served from Google servers', 'local-google-fonts' ) ); ?>
+						<?php endif; ?>
+					
+					</td>
+
+				</tr>
+			<?php endforeach ?>						
+			</tbody>
+		</table>		
+			<p>
+				 <button class="host-locally button button-primary" name="hostlocal" value="<?php echo esc_attr( $data['handle'] ); ?>"><?php esc_html_e( 'Host locally', 'local-google-fonts' ); ?></button>
+				<?php if ( is_dir( $folder . '/' . $data['id'] ) ) : ?>
+				<button class="host-locally button button-link-delete" name="removelocal" value="<?php echo esc_attr( $data['handle'] ); ?>"><?php esc_html_e( 'Remove hosted files', 'local-google-fonts' ); ?></button>
+				<?php endif; ?>
+			</p>
+		<?php endforeach ?>
+		<hr>
+		<p class="textright">
+			<button class="host-locally button button-link-delete" name="flush" value="1"><?php esc_html_e( 'Remove all stored data', 'local-google-fonts' ); ?></button>
+		</p>	
+		</form>
+		</div>
+		<?php
+	}
+
 
 	public function get_font_info( $src ) {
 
@@ -194,99 +321,5 @@ class LGF_Admin {
 
 	}
 
-	public function render_settings() {
-
-		$buffer = get_option( 'local_google_fonts_buffer', array() );
-
-		$folder     = WP_CONTENT_DIR . '/uploads/fonts';
-		$folder_url = WP_CONTENT_URL . '/uploads/fonts';
-		$count      = count( $buffer );
-
-		?>
-	<div class="wrap">
-	<h1><?php printf( esc_html__( _n( '%d Google font source found on your site.', '%d Google font sources found on your site.', $count, 'local-google-font' ) ), $count ); ?></h1>
-
-	<p><?php esc_html_e( 'This page shows all discovered Google Fonts over time. If you miss a font start browsing your front end so they end up showing here.', 'local-google-fonts' ); ?></p>
-	
-		<?php if ( ! $count ) : ?>
-		<p><?php esc_html_e( 'You have currently no Google fonts in use on your site.', 'local-google-fonts' ); ?></p>
-	<?php endif; ?>
-
-	<form action="options.php" method="post">
-		<?php
-		settings_fields( 'local_google_fonts' );
-		do_settings_sections( 'local_google_fonts_section' );
-		?>
-
-		<?php foreach ( $buffer as $id => $data ) : ?>
-
-		<h2><?php esc_html_e( 'Handle', 'local-google-fonts' ); ?>: <code><?php esc_html_e( $data['handle'] ); ?></code></h2>
-		<p><?php esc_html_e( 'Original URL', 'local-google-fonts' ); ?>: <code><?php echo rawurldecode( $data['src'] ); ?></code> <a href="<?php echo esc_url( $data['src'] ); ?>" class="dashicons dashicons-external" target="_blank" title="<?php esc_attr_e( 'show original URL', 'local-google-fonts' ); ?>"></a></p>
-
-	<table class="wp-list-table widefat fixed striped table-view-list ">
-		<thead>
-			<tr>
-				<th scope="col" id="name" class="manage-column column-name column-primary" style="width: 150px"><?php esc_html_e( 'Name', 'local-google-fonts' ); ?></th>
-				<th scope="col" id="description" class="manage-column column-description"><?php esc_html_e( 'Variants', 'local-google-fonts' ); ?></th>
-				<th scope="col" id="auto-updates" class="manage-column column-auto-updates"  style="width: 250px"><?php esc_html_e( 'Status', 'local-google-fonts' ); ?></th>
-			</tr>
-		</thead>
-		<tbody>
-			<?php $fontinfo = $this->get_font_info( $data['src'] ); ?>
-
-			<?php foreach ( $fontinfo as $i => $set ) : ?>
-			<tr>
-				<td><strong><?php echo esc_html( $set->family ); ?></strong><br>
-				</td>
-				<td>
-					<p class="code">
-					<?php foreach ( $set->variants as $variant ) : ?>
-							<span class="variant"><?php printf( '%s %s', $variant->fontStyle, $variant->fontWeight ); ?></span> 
-					<?php endforeach ?>
-					</p>
-					<details>
-						<summary><strong><?php printf( '%d files from Google Servers', count( $set->variants ) * 5 ); ?></strong></summary>
-						<div style="max-height: 200px; overflow: scroll;font-size: small;white-space: nowrap; overflow: hidden; overflow-y: auto;" class="code">
-						<?php foreach ( $set->variants as $variant ) : ?>
-							<p>
-							<strong><?php printf( '%s %s', $variant->fontStyle, $variant->fontWeight ); ?></strong><br>
-							<code><?php echo esc_url( $variant->woff2 ); ?></code><br>
-							<code><?php echo esc_url( $variant->ttf ); ?></code><br>
-							<code><?php echo esc_url( $variant->svg ); ?></code><br>
-							<code><?php echo esc_url( $variant->eot ); ?></code><br>
-							<code><?php echo esc_url( $variant->woff ); ?></code>
-							</p>
-						<?php endforeach ?>
-						</div>
-					</details>
-				</td>
-				<td>
-					<?php if ( is_dir( $folder . '/' . $data['id'] ) ) : ?>
-						<?php printf( '%s %s', '<strong>✔</strong>', esc_html__( 'loaded, served from your server', 'local-google-fonts' ) ); ?>
-					<?php else : ?>
-						<?php printf( '%s %s', '<strong class="wp-ui-text-notification">✕</strong>', esc_html__( 'not loaded, served from Google servers', 'local-google-fonts' ) ); ?>
-					<?php endif; ?>
-				
-				</td>
-
-			</tr>
-		<?php endforeach ?>						
-		</tbody>
-	</table>		
-		<p>
-			 <button class="host-locally button button-primary" name="hostlocal" value="<?php echo esc_attr( $data['handle'] ); ?>"><?php esc_html_e( 'Host locally', 'local-google-fonts' ); ?></button>
-			<?php if ( is_dir( $folder . '/' . $data['id'] ) ) : ?>
-			<button class="host-locally button button-link-delete" name="removelocal" value="<?php echo esc_attr( $data['handle'] ); ?>"><?php esc_html_e( 'Remove hosted files', 'local-google-fonts' ); ?></button>
-			<?php endif; ?>
-		</p>
-	<?php endforeach ?>
-	<p class="textright">
-		<button class="host-locally button button-link-delete" name="flush" value="1"><?php esc_html_e( 'Remove all stored data', 'local-google-fonts' ); ?></button>
-	</p>
-	</form>
-</div>
-		<?php
-
-	}
 
 }

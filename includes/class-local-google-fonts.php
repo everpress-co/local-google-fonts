@@ -56,6 +56,10 @@ class LGF {
 
 		$WP_Filesystem = $this->wp_filesystem();
 
+		if ( ! function_exists( 'get_plugin_data' ) ) {
+			include ABSPATH . 'wp-admin/includes/plugin.php';
+		}
+
 		$plugin_data = get_plugin_data( LGF_PLUGIN_FILE );
 
 		$style  = "/*\n";
@@ -172,6 +176,11 @@ class LGF {
 			);
 
 			update_option( 'local_google_fonts_buffer', $buffer );
+
+			$options = get_option( 'local_google_fonts' );
+			if ( isset( $options['auto_load'] ) ) {
+				$src = $this->process_url( $src, $handle );
+			}
 		}
 
 		return $src;
