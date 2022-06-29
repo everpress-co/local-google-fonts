@@ -44,7 +44,7 @@ more on [wptavern.com](https://wptavern.com/german-court-fines-website-owner-for
 
 ### Will this load Google Fonts automatically?
 
-No, each font set must be manually triggered. Automatic loading of assets from a third party server is forbidden by the [plugin guidelines](https://developer.wordpress.org/plugins/wordpress-org/detailed-plugin-guidelines/).
+Yes, if you check the option to load fonts automatically. Otherwise each font set must be manually triggered.
 
 ### Is it Legal to Self-Host Google Fonts?
 
@@ -62,7 +62,7 @@ The plugin currently only checks fonts embedded via [`wp_enqueue_style`](https:/
 
 ### 0.9
 
--   new: options to load fonts automatically.
+-   new: options to load fonts automatically
 
 ### 0.8
 
