@@ -323,5 +323,4 @@ class LGF_Admin {
 
 	}
 
-
 }
