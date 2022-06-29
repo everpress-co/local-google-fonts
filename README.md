@@ -62,7 +62,7 @@ The plugin currently only checks fonts embedded via [`wp_enqueue_style`](https:/
 
 ### 0.9
 
--   new: options to load fonts automatically
+-   new: options to load fonts automatically.
 
 ### 0.8
 
