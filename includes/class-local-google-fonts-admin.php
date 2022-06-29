@@ -92,6 +92,8 @@ class LGF_Admin {
 		</p>
 		<?php
 	}
+
+	
 	public function render_settings() {
 		// check user capabilities
 		if ( ! current_user_can( 'manage_options' ) ) {
