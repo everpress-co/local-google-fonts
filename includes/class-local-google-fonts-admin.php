@@ -281,6 +281,34 @@ class LGF_Admin {
 				}
 			}
 
+			if ( $family === 'montserrat' ) {
+
+				// https://docs.microsoft.com/en-us/typography/opentype/spec/os2#usweightclass
+				$styles = array(
+					100 => 'Thin',
+					200 => 'ExtraLight',
+					300 => 'Light',
+					400 => 'Regular',
+					500 => 'Medium',
+					600 => 'SemiBold',
+					700 => 'Bold',
+					800 => 'ExtraBold',
+					900 => 'Black',
+				);
+
+				foreach ( $info->variants as $i => $variant ) {
+
+					$font_name                   = sprintf(
+						'%s%s-%s%s',
+						'https://github.com/JulietaUla/Montserrat/raw/master/fonts/webfonts/',
+						$info->family,
+						$styles[ $variant->fontWeight ],
+						( $variant->fontStyle === 'italic' ? 'Italic' : '' ),
+					);
+					$info->variants[ $i ]->woff2 = $font_name . '.woff2';
+				}
+			}
+
 			$info->variants = array_values( $info->variants );
 			$fontinfo[]     = $info;
 
