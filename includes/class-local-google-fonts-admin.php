@@ -6,6 +6,18 @@ namespace EverPress;
 class LGF_Admin {
 
 	private static $instance = null;
+	private $weightClass     = array(
+		100 => 'Thin',
+		200 => 'ExtraLight',
+		300 => 'Light',
+		400 => 'Regular',
+		500 => 'Medium',
+		600 => 'SemiBold',
+		700 => 'Bold',
+		800 => 'ExtraBold',
+		900 => 'Black',
+	);
+
 
 	private function __construct() {
 
@@ -281,31 +293,23 @@ class LGF_Admin {
 				}
 			}
 
-			if ( $family === 'montserrat' ) {
-
-				// https://docs.microsoft.com/en-us/typography/opentype/spec/os2#usweightclass
-				$styles = array(
-					100 => 'Thin',
-					200 => 'ExtraLight',
-					300 => 'Light',
-					400 => 'Regular',
-					500 => 'Medium',
-					600 => 'SemiBold',
-					700 => 'Bold',
-					800 => 'ExtraBold',
-					900 => 'Black',
-				);
+			// fonts with render bug /https://github.com/everpress-co/local-google-fonts/issues/1)
+			if ( in_array( $family, array( 'montserrat', 'jost', 'inter', 'exo-2' ) ) ) {
 
 				foreach ( $info->variants as $i => $variant ) {
 
-					$font_name                   = sprintf(
-						'%s%s-%s%s',
-						'https://github.com/JulietaUla/Montserrat/raw/master/fonts/webfonts/',
-						$info->family,
-						$styles[ $variant->fontWeight ],
+					$san_family = str_replace( ' ', '', $info->family );
+
+					$font_name = sprintf(
+						'%s-%s%s',
+						$san_family,
+						$this->weightClass[ $variant->fontWeight ],
 						( $variant->fontStyle === 'italic' ? 'Italic' : '' ),
 					);
-					$info->variants[ $i ]->woff2 = $font_name . '.woff2';
+
+					// there's no RegularItalic
+					$font_name                   = str_replace( $san_family . '-RegularItalic', $san_family . '-Italic', $font_name );
+					$info->variants[ $i ]->woff2 = 'https://github.com/everpress-co/local-google-fonts-render-bug/raw/main/fonts/' . $family . '/' . $font_name . '.woff2';
 				}
 			}
 
@@ -344,6 +348,8 @@ class LGF_Admin {
 		} else {
 			// handle XXXi variants
 			$variants = preg_replace( '/(\d{3}+)i/', '$1italic', $variants );
+			// handle XXXitalic is converted into XXXitalictalic
+			$variants = str_replace( 'italictalic', 'italic', $variants );
 			$variants = explode( ',', $variants );
 		}
 
