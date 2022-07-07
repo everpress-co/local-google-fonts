@@ -60,6 +60,8 @@ class LGF {
 			include ABSPATH . 'wp-admin/includes/plugin.php';
 		}
 
+		$time = time();
+
 		$plugin_data = get_plugin_data( LGF_PLUGIN_FILE );
 
 		$style  = "/*\n";
@@ -116,21 +118,21 @@ class LGF {
 					$style .= "\tfont-display: " . $args['display'] . ";\n";
 				}
 
-				$style .= "\tsrc: url('" . $file . ".eot');\n";
+				$style .= "\tsrc: url('" . $file . ".eot?v=$time');\n";
 				$style .= "\tsrc: local(''),\n";
-				$style .= "\t\turl('" . $file . ".eot?#iefix') format('embedded-opentype'),\n";
+				$style .= "\t\turl('" . $file . ".eot?v=$time?#iefix') format('embedded-opentype'),\n";
 
 				if ( $v->woff2 ) {
-					$style .= "\t\turl('" . $file . ".woff2') format('woff2'),\n";
+					$style .= "\t\turl('" . $file . ".woff2?v=$time') format('woff2'),\n";
 				}
 				if ( $v->woff ) {
-					$style .= "\t\turl('" . $file . ".woff') format('woff'),\n";
+					$style .= "\t\turl('" . $file . ".woff?v=$time') format('woff'),\n";
 				}
 				if ( $v->ttf ) {
-					$style .= "\t\turl('" . $file . ".ttf') format('truetype'),\n";
+					$style .= "\t\turl('" . $file . ".ttf?v=$time') format('truetype'),\n";
 				}
 				if ( $v->svg ) {
-					$style .= "\t\turl('" . $file . '.svg' . strrchr( $v->svg, '#' ) . "') format('svg');\n";
+					$style .= "\t\turl('" . $file . ".svg?v=$time" . strrchr( $v->svg, '#' ) . "') format('svg');\n";
 				}
 				$style .= "}\n\n";
 
