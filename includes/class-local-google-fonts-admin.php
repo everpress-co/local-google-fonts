@@ -168,7 +168,7 @@ class LGF_Admin {
 						<?php endforeach ?>
 						</p>
 						<details>
-							<summary><strong><?php printf( '%d remote files', count( $font->variants ) * 5 ); ?></strong></summary>
+							<summary><strong><?php printf( esc_html__( '%1$d of %2$d files loaded.', 'local-google-fonts' ), $font->loaded, $font->total ); ?></strong></summary>
 							<div style="max-height: 280px; overflow: scroll;font-size: small;white-space: nowrap; overflow: hidden; overflow-y: auto;" class="code">
 							<?php foreach ( $font->variants as $variant ) : ?>
 								<div>
@@ -207,16 +207,18 @@ class LGF_Admin {
 			</tbody>
 		</table>		
 			<p>
-				 <button class="host-locally button button-primary" name="hostlocal" value="<?php echo esc_attr( $data['handle'] ); ?>"><?php esc_html_e( 'Host locally', 'local-google-fonts' ); ?></button>
 				<?php if ( is_dir( $folder . '/' . $data['id'] ) ) : ?>
+				<button class="host-locally button button-primary" name="hostlocal" value="<?php echo esc_attr( $data['handle'] ); ?>"><?php esc_html_e( 'Reload Fonts', 'local-google-fonts' ); ?></button>
 				<button class="host-locally button button-link-delete" name="removelocal" value="<?php echo esc_attr( $data['handle'] ); ?>"><?php esc_html_e( 'Remove hosted files', 'local-google-fonts' ); ?></button>
+				<?php else : ?>
+				 <button class="host-locally button button-primary" name="hostlocal" value="<?php echo esc_attr( $data['handle'] ); ?>"><?php esc_html_e( 'Host locally', 'local-google-fonts' ); ?></button>
 				<?php endif; ?>
 			</p>
 		<?php endforeach ?>
 		<hr>
-		<p class="textright">
-			<button class="host-locally button button-link-delete" name="flush" value="1"><?php esc_html_e( 'Remove all stored data', 'local-google-fonts' ); ?></button>
-		</p>	
+			<p class="textright">
+				<button class="host-locally button button-link-delete" name="flush" value="1"><?php esc_html_e( 'Remove all stored data', 'local-google-fonts' ); ?></button>
+			</p>	
 		</form>
 		</div>
 		<?php
@@ -224,6 +226,11 @@ class LGF_Admin {
 
 
 	public function get_font_info( $src ) {
+
+		$folder     = WP_CONTENT_DIR . '/uploads/fonts';
+		$folder_url = WP_CONTENT_URL . '/uploads/fonts';
+
+		$id = md5( $src );
 
 		// a bit sanitation as URLs are often registered with esc_url
 		$src = str_replace( array( '#038;', '&amp;' ), '&', $src );
@@ -322,6 +329,22 @@ class LGF_Admin {
 					// there's no RegularItalic
 					$font_name                   = str_replace( $san_family . '-RegularItalic', $san_family . '-Italic', $font_name );
 					$info->variants[ $i ]->woff2 = 'https://github.com/everpress-co/local-google-fonts-render-bug/raw/main/fonts/' . $family . '/' . $font_name . '.woff2';
+				}
+			}
+
+			$filename     = $id . '/' . $info->id . '-' . $info->version . '-' . $info->defSubset;
+			$info->total  = count( $info->variants ) * 5;
+			$info->loaded = 0;
+
+			foreach ( $info->variants as $i => $variant ) {
+				$file = $filename . '-' . $variant->id;
+
+				$info->variants[ $i ]->loaded = array();
+				foreach ( array( 'woff', 'svg', 'woff2', 'ttf', 'eot' ) as $ext ) {
+					if ( file_exists( $folder . '/' . $file . '.' . $ext ) ) {
+						$info->loaded++;
+						$info->variants[ $i ]->loaded[ $ext ] = $file . '.' . $ext;
+					}
 				}
 			}
 
