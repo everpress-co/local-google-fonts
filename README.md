@@ -6,8 +6,8 @@ Requires at least: 4.6
 Tested up to: 6.0  
 Stable tag: 0.10
 Requires PHP: 5.6+  
-License: GPLv2 or later
-Author: EverPress
+License: GPLv2 or later  
+Author: EverPress  
 Author URI: https://everpress.co
 
 ## Description

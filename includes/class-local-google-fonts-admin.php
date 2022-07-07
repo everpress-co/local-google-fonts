@@ -57,6 +57,8 @@ class LGF_Admin {
 		wp_enqueue_script( 'local-google-fonts-admin', $url . '/admin.js', array( 'jquery' ), filemtime( $path . '/admin.js' ), true );
 		wp_enqueue_style( 'local-google-fonts-admin', $url . '/admin.css', array(), filemtime( $path . '/admin.css' ) );
 
+		add_action( 'admin_footer_text', array( $this, 'admin_footer_text' ) );
+
 	}
 
 	public function local_google_fonts_validate( $options ) {
@@ -392,4 +394,7 @@ class LGF_Admin {
 
 	}
 
+	public function admin_footer_text( $default ) {
+		return sprintf( esc_html__( 'If you like %1$s please leave a %2$s&#9733;&#9733;&#9733;&#9733;&#9733;%3$s rating. Thanks in advance!', 'local-google-fonts' ), '<strong>Local Google Fonts</strong>', '<a href="https://wordpress.org/support/view/plugin-reviews/local-google-fonts?filter=5#new-post" target="_blank" rel="noopener noreferrer">', '</a>' );
+	}
 }
