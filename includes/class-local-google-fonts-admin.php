@@ -105,7 +105,7 @@ class LGF_Admin {
 		<?php
 	}
 
-	
+
 	public function render_settings() {
 		// check user capabilities
 		if ( ! current_user_can( 'manage_options' ) ) {
@@ -155,28 +155,40 @@ class LGF_Admin {
 			<tbody>
 				<?php $fontinfo = $this->get_font_info( $data['src'] ); ?>
 
-				<?php foreach ( $fontinfo as $i => $set ) : ?>
+				<?php foreach ( $fontinfo as $i => $font ) : ?>
+
+					<?php $filename = $font->id . '-' . $font->version . '-' . $font->defSubset; ?>
 				<tr>
-					<td><strong><?php echo esc_html( $set->family ); ?></strong><br>
+					<td><strong><?php echo esc_html( $font->family ); ?></strong><br>
 					</td>
 					<td>
 						<p class="code">
-						<?php foreach ( $set->variants as $variant ) : ?>
+						<?php foreach ( $font->variants as $variant ) : ?>
 								<span class="variant"><?php printf( '%s %s', $variant->fontStyle, $variant->fontWeight ); ?></span> 
 						<?php endforeach ?>
 						</p>
 						<details>
-							<summary><strong><?php printf( '%d files from Google Servers', count( $set->variants ) * 5 ); ?></strong></summary>
-							<div style="max-height: 200px; overflow: scroll;font-size: small;white-space: nowrap; overflow: hidden; overflow-y: auto;" class="code">
-							<?php foreach ( $set->variants as $variant ) : ?>
-								<p>
-								<strong><?php printf( '%s %s', $variant->fontStyle, $variant->fontWeight ); ?></strong><br>
-								<code><?php echo esc_url( $variant->woff2 ); ?></code><br>
-								<code><?php echo esc_url( $variant->ttf ); ?></code><br>
-								<code><?php echo esc_url( $variant->svg ); ?></code><br>
-								<code><?php echo esc_url( $variant->eot ); ?></code><br>
-								<code><?php echo esc_url( $variant->woff ); ?></code>
-								</p>
+							<summary><strong><?php printf( '%d remote files', count( $font->variants ) * 5 ); ?></strong></summary>
+							<div style="max-height: 280px; overflow: scroll;font-size: small;white-space: nowrap; overflow: hidden; overflow-y: auto;" class="code">
+							<?php foreach ( $font->variants as $variant ) : ?>
+								<div>
+								<h4><?php printf( '%s %s', $variant->fontStyle, $variant->fontWeight ); ?></h4>
+								<?php foreach ( array( 'woff', 'svg', 'woff2', 'ttf', 'eot' ) as $ext ) : ?>
+									<ul>
+									<li>
+									<?php $file = $data['id'] . '/' . $filename . '-' . $variant->id . '.' . $ext; ?>
+									<?php if ( file_exists( $folder . '/' . $file ) ) : ?>
+										<code><?php esc_html_e( 'Local', 'local-google-fonts' ); ?>: <a href="<?php echo esc_url( $folder_url . '/' . $file ); ?>" download><?php echo esc_html( basename( $file ) ); ?></a></code>
+										<strong title="<?php esc_attr_e( 'loaded, served from your server', 'local-google-fonts' ); ?>">✔</strong>
+									<?php else : ?>
+										<code><?php esc_html_e( 'Local', 'local-google-fonts' ); ?>: <?php echo esc_html( basename( $file ) ); ?></code>
+										<strong class="wp-ui-text-notification" title="<?php esc_attr_e( 'not loaded, served from Google servers', 'local-google-fonts' ); ?>">✕</strong>
+									<?php endif; ?>	
+									</li>								
+									<li><code><?php esc_html_e( 'Remote', 'local-google-fonts' ); ?>: <?php echo esc_url( $variant->{$ext} ); ?></code></li>
+									</ul>
+								<?php endforeach; ?>
+								</div>
 							<?php endforeach ?>
 							</div>
 						</details>
