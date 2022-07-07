@@ -60,6 +60,8 @@ class LGF {
 			include ABSPATH . 'wp-admin/includes/plugin.php';
 		}
 
+		$time = time();
+
 		$plugin_data = get_plugin_data( LGF_PLUGIN_FILE );
 
 		$style  = "/*\n";
@@ -92,17 +94,21 @@ class LGF {
 			foreach ( $font->variants as $v ) {
 
 				$file = $filename . '-' . $v->id;
-
+				if ( ! is_dir( $folder . '/' . $id ) ) {
+					wp_mkdir_p( $folder . '/' . $id );
+				}
 				foreach ( array( 'woff', 'svg', 'woff2', 'ttf', 'eot' ) as $ext ) {
 
-					if ( ! is_dir( $folder . '/' . $id ) ) {
-						wp_mkdir_p( $folder . '/' . $id );
+					if ( $v->{$ext} ) {
+						$tmp_file = download_url( $v->{$ext} );
+						if ( ! is_wp_error( $tmp_file ) ) {
+							$filepath = $folder . '/' . $id . '/' . $file . '.' . $ext;
+							$WP_Filesystem->copy( $tmp_file, $filepath );
+							$WP_Filesystem->delete( $tmp_file );
+						} else {
+							$v->{$ext} = null;
+						}
 					}
-					$tmp_file = download_url( $v->{$ext} );
-					$filepath = $folder . '/' . $id . '/' . $file . '.' . $ext;
-					$WP_Filesystem->copy( $tmp_file, $filepath );
-					$WP_Filesystem->delete( $tmp_file );
-
 				}
 				$style .= "@font-face {\n";
 				$style .= "\tfont-family: " . $v->fontFamily . ";\n";
@@ -111,17 +117,28 @@ class LGF {
 				if ( $args['display'] && $args['display'] !== 'auto' ) {
 					$style .= "\tfont-display: " . $args['display'] . ";\n";
 				}
-				$style .= "\tsrc: url('" . $file . ".eot');\n";
+
+				$style .= "\tsrc: url('" . $file . ".eot?v=$time');\n";
 				$style .= "\tsrc: local(''),\n";
-				$style .= "\t     url('" . $file . ".eot?#iefix') format('embedded-opentype'),\n";
-				$style .= "\t     url('" . $file . ".woff2') format('woff2'),\n";
-				$style .= "\t     url('" . $file . ".woff') format('woff'),\n";
-				$style .= "\t     url('" . $file . ".ttf') format('truetype'),\n";
-				$style .= "\t     url('" . $file . '.svg' . strrchr( $v->svg, '#' ) . "') format('svg');\n";
+				$style .= "\t\turl('" . $file . ".eot?v=$time?#iefix') format('embedded-opentype'),\n";
+
+				if ( $v->woff2 ) {
+					$style .= "\t\turl('" . $file . ".woff2?v=$time') format('woff2'),\n";
+				}
+				if ( $v->woff ) {
+					$style .= "\t\turl('" . $file . ".woff?v=$time') format('woff'),\n";
+				}
+				if ( $v->ttf ) {
+					$style .= "\t\turl('" . $file . ".ttf?v=$time') format('truetype'),\n";
+				}
+				if ( $v->svg ) {
+					$style .= "\t\turl('" . $file . ".svg?v=$time" . strrchr( $v->svg, '#' ) . "') format('svg');\n";
+				}
 				$style .= "}\n\n";
 
 			}
 		}
+
 
 		$WP_Filesystem->put_contents( $new_dir, $style );
 
