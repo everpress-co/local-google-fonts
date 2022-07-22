@@ -58,6 +58,10 @@ Fonts are discovered once they are used. Try to browse your front end first and 
 
 The plugin currently only checks fonts embedded via [`wp_enqueue_style`](https://developer.wordpress.org/reference/functions/wp_enqueue_style/) if you use Google fonts via `@import` you have to change that first.
 
+### The Divi theme still loads a Google font?
+
+The Divi theme has a custom implementation of Google Fonts. To use LGF with Divi disable _Improve Google Fonts Loading_ on the Performance Settings page of Divi.
+
 ## Changelog
 
 ### 0.10

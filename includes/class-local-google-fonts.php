@@ -182,6 +182,11 @@ class LGF {
 			$src = add_query_arg( 'v', filemtime( $stylesheet ), $stylesheet_url );
 		} else {
 
+			// special case for neve theme (https://wordpress.org/support/topic/problems-with-neve-theme-costomizer/)
+			if ( false !== strpos( $handle, 'neve-fonts-control-google-fonts-' ) ) {
+				return $src;
+			}
+
 			if ( is_null( $handle ) ) {
 				$handle = $id;
 			}
