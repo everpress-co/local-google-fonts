@@ -4,7 +4,7 @@ Contributors: everpress, xaverb
 Tags: googlefonts, google, fonts, gdpr, lgf, font, speed
 Requires at least: 4.6  
 Tested up to: 6.0  
-Stable tag: 0.11
+Stable tag: 0.12
 Requires PHP: 5.6+  
 License: GPLv2 or later  
 Author: EverPress  
@@ -62,7 +62,17 @@ The plugin currently only checks fonts embedded via [`wp_enqueue_style`](https:/
 
 The Divi theme has a custom implementation of Google Fonts. To use LGF with Divi disable _Improve Google Fonts Loading_ on the Performance Settings page of Divi.
 
+### Why are some characters displayed in the fallback font?
+
+You may have loaded a subset which doesn't included required characters. Check additional subsets on the settings page and reload your font.
+
 ## Changelog
+
+### 0.12
+
+-   Do not handle fonts sources with more than 30 families (why would you need that?)
+-   Add option to choose subsets for each font family
+-   Disable functionality in the customizer
 
 ### 0.11
 
