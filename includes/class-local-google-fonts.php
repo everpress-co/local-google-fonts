@@ -87,7 +87,11 @@ class LGF {
 		$new_dir = $folder . '/' . $id . '/font.css';
 
 		$class    = LGF_Admin::get_instance();
-		$fontinfo = $class->get_font_info( $src );
+		$fontinfo = $class->get_font_info( $src, $handle );
+
+		if ( ! $fontinfo ) {
+			return $src;
+		}
 
 		foreach ( $fontinfo as $font ) {
 			$filename = $font->id . '-' . $font->version . '-' . $font->defSubset;
@@ -139,7 +143,6 @@ class LGF {
 			}
 		}
 
-
 		$WP_Filesystem->put_contents( $new_dir, $style );
 
 		return $new_src;
@@ -176,14 +179,13 @@ class LGF {
 
 		$stylesheet     = $folder . '/' . $id . '/font.css';
 		$stylesheet_url = $folder_url . '/' . $id . '/font.css';
-		$buffer         = get_option( 'local_google_fonts_buffer', array() );
 
 		if ( file_exists( $stylesheet ) ) {
 			$src = add_query_arg( 'v', filemtime( $stylesheet ), $stylesheet_url );
 		} else {
 
-			// special case for neve theme (https://wordpress.org/support/topic/problems-with-neve-theme-costomizer/)
-			if ( false !== strpos( $handle, 'neve-fonts-control-google-fonts-' ) ) {
+			// do not load on customizer preview.
+			if ( is_customize_preview() ) {
 				return $src;
 			}
 
@@ -191,6 +193,7 @@ class LGF {
 				$handle = $id;
 			}
 
+			$buffer            = get_option( 'local_google_fonts_buffer', array() );
 			$buffer[ $handle ] = array(
 				'id'     => $id,
 				'handle' => $handle,
