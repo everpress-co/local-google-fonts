@@ -363,7 +363,7 @@ class LGF_Admin {
 						'%s-%s%s',
 						$san_family,
 						$this->weightClass[ $variant->fontWeight ],
-						( $variant->fontStyle === 'italic' ? 'Italic' : '' ),
+						( $variant->fontStyle === 'italic' ? 'Italic' : '' )
 					);
 
 					// there's no RegularItalic
