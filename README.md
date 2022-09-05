@@ -24,6 +24,10 @@ more on [wptavern.com](https://wptavern.com/german-court-fines-website-owner-for
 
 ![Option Interface.](.wordpress-org/screenshot-1.png)
 
+### 2. Access dev tools in your browser
+
+![Dev tools](.wordpress-org/screenshot-2.png)
+
 ### Features
 
 ### 1. Quick install (activate, setup and forget)
@@ -52,16 +56,14 @@ Yes. The open source fonts from Google Fonts are published under a licenses that
 
 ### How to check if my site is loading Google Fonts?
 
-It's easy to check if your site is loading fonts from a third party source:
+It's easy to check if your site is loading fonts from a third party source (check 2nd screenshot above:
 
 1. Open the dev tools (Cmd + Opt + I on Mac or F12, or Ctrl + Shift + I on Windows)
 2. Go to the **Network** tab and select the **Fonts** type
-3. Relaod your page to see all fonts loaded on your site.
+3. Reload your page to see all fonts loaded on your site.
 4. Check the **Domain** column if it contains domains from a third party (Google is fonts.gstatic.com)
 
 If you host your fonts locally with [Local Google Fonts](https://wordpress.org/plugins/local-google-fonts/) there should be no fonts loaded from the Google servers.
-
-![Dev Tools](.wordpress-org/devtools.png)
 
 ### My fonts do not show up on the settings page, what can I do?
 
