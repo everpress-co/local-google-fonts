@@ -4,7 +4,7 @@ Contributors: everpress, xaverb
 Tags: googlefonts, google, fonts, gdpr, lgf, font, speed
 Requires at least: 4.6  
 Tested up to: 6.0  
-Stable tag: 0.12
+Stable tag: 0.13
 Requires PHP: 5.6+  
 License: GPLv2 or later  
 Author: EverPress  
@@ -23,6 +23,10 @@ more on [wptavern.com](https://wptavern.com/german-court-fines-website-owner-for
 ### 1. Option Interface.
 
 ![Option Interface.](.wordpress-org/screenshot-1.png)
+
+### 2. Access dev tools in your browser
+
+![Dev tools](.wordpress-org/screenshot-2.png)
 
 ### Features
 
@@ -50,6 +54,17 @@ Yes, if you check the option to load fonts automatically. Otherwise each font se
 
 Yes. The open source fonts from Google Fonts are published under a licenses that allow you to use them on any website, no matter if it’s commercial or personal.
 
+### How to check if my site is loading Google Fonts?
+
+It's easy to check if your site is loading fonts from a third party source (check [2nd screenshot](https://wordpress.org/plugins/local-google-fonts/#screenshots) above):
+
+1. Open the dev tools (Cmd + Opt + I on Mac or F12, or Ctrl + Shift + I on Windows)
+2. Go to the **Network** tab and select the **Fonts** type
+3. Reload your page to see all fonts loaded on your site.
+4. Check the **Domain** column if it contains domains from a third party (Google is fonts.gstatic.com)
+
+If you host your fonts locally with [Local Google Fonts](https://wordpress.org/plugins/local-google-fonts/) there should be no fonts loaded from the Google servers.
+
 ### My fonts do not show up on the settings page, what can I do?
 
 Fonts are discovered once they are used. Try to browse your front end first and get back to the settings page.
@@ -67,6 +82,13 @@ The Divi theme has a custom implementation of Google Fonts. To use LGF with Divi
 You may have loaded a subset which doesn't included required characters. Check additional subsets on the settings page and reload your font.
 
 ## Changelog
+
+### 0.13
+
+-   improved: better explanations on errors.
+-   improved: Higher propriety for wp_resource_hints to catch them all. Fixes #8
+-   implemented an alias method for no longer supported fonts.
+-   fixed: Syntax error on older PHP versions
 
 ### 0.12
 

@@ -15,7 +15,7 @@ class LGF {
 
 		add_filter( 'style_loader_src', array( $this, 'switch_stylesheet_src' ), 10, 2 );
 		add_filter( 'switch_theme', array( $this, 'clear' ) );
-		add_filter( 'wp_resource_hints', array( $this, 'remove_dns_prefetch' ), 10, 2 );
+		add_filter( 'wp_resource_hints', array( $this, 'remove_dns_prefetch' ), PHP_INT_MAX, 2 );
 
 		add_filter( 'local_google_fonts_replace_in_content', array( $this, 'replace_in_content' ) );
 		add_filter( 'local_google_fonts_replace_url', array( $this, 'google_to_local_url' ), 10, 2 );
@@ -89,7 +89,7 @@ class LGF {
 		$class    = LGF_Admin::get_instance();
 		$fontinfo = $class->get_font_info( $src, $handle );
 
-		if ( ! $fontinfo ) {
+		if ( is_wp_error( $fontinfo ) ) {
 			return $src;
 		}
 

@@ -159,7 +159,11 @@ class LGF_Admin {
 		
 				<?php $fontinfo = $this->get_font_info( $data['src'], $data['handle'] ); ?>
 
-				<?php if ( $fontinfo ) : ?>
+				<?php if ( is_wp_error( $fontinfo ) ) : ?>
+			<div class="notice inline error">
+				<p><strong><?php echo esc_html( $fontinfo->get_error_message() ); ?></strong></p>
+			</div>
+			<?php else : ?>
 
 			<table class="wp-list-table widefat fixed striped table-view-list ">
 				<thead>
@@ -175,6 +179,9 @@ class LGF_Admin {
 							<?php $filename = $font->id . '-' . $font->version . '-' . $font->defSubset; ?>
 					<tr>
 						<td><strong><?php echo esc_html( $font->family ); ?></strong><br>
+							<?php if ( $font->id != $font->original ) : ?>
+								<span class="font-alternative" title="<?php esc_attr_e( 'This is the best alternative for a font no longer supported.', 'local-google-fonts' ); ?>"><?php esc_html_e( 'alternative', 'local-google-fonts' ); ?></span>
+							<?php endif; ?>
 						</td>
 						<td>
 							<p class="code">
@@ -182,9 +189,7 @@ class LGF_Admin {
 									<span class="variant"><?php printf( '%s %s', $variant->fontStyle, $variant->fontWeight ); ?></span> 
 							<?php endforeach ?>
 							</p>
-							<?php
-							$active_subsets = isset( $data['subsets'] ) ? $data['subsets'][ $font->id ] : array_keys( array_filter( (array) $font->subsetMap ) );
-							?>
+							<?php $active_subsets = isset( $data['subsets'] ) ? $data['subsets'][ $font->id ] : array_keys( array_filter( (array) $font->subsetMap ) ); ?>
 							<p><strong><?php esc_html_e( 'Subsets', 'local-google-fonts' ); ?></strong><br>
 							<?php foreach ( $font->subsetMap as $subset => $is_active ) : ?>
 								<label title="<?php printf( esc_attr__( 'Load %s subset with this font', 'local-google-fonts' ), $subset ); ?>" class="subset"><input type="checkbox" name="subsets[<?php echo esc_attr( $data['handle'] ); ?>][<?php echo esc_attr( $font->id ); ?>][]" value="<?php echo esc_attr( $subset ); ?>" <?php checked( in_array( $subset, $active_subsets ) ); ?>> <?php echo esc_html( $subset ); ?> </label> 
@@ -237,10 +242,6 @@ class LGF_Admin {
 				 <button class="host-locally button button-primary" name="hostlocal" value="<?php echo esc_attr( $data['handle'] ); ?>"><?php esc_html_e( 'Host locally', 'local-google-fonts' ); ?></button>
 				<?php endif; ?>
 			</p>
-		<?php else : ?>
-			<div class="notice inline error">
-				<p><strong><?php esc_html_e( 'This source contains more than 30 fonts and is most likely used as helper for your theme. Skipped.', 'local-google-fonts' ); ?></strong></p>
-			</div>
 		<?php endif; ?>
 
 		<?php endforeach ?>
@@ -309,13 +310,14 @@ class LGF_Admin {
 
 		// do not load them as its most likely some helper font thing
 		if ( count( $families ) > 30 ) {
-			return false;
+			return new \WP_Error( 'to_many_families', esc_html__( 'This source contains more than 30 fonts and is most likely used as helper for your theme. Skipped.', 'local-google-fonts' ) );
 		}
 
 		$buffer = get_option( 'local_google_fonts_buffer', array() );
 
 		foreach ( $families as $family => $variants ) {
 			$url     = 'https://google-webfonts-helper.herokuapp.com/api/fonts/';
+			$alias   = $this->font_family_alias( $family );
 			$subsets = isset( $buffer[ $handle ]['subsets'][ $family ] ) ? implode( ',', array_filter( $buffer[ $handle ]['subsets'][ $family ] ) ) : $args['subset'];
 			$the_url = add_query_arg(
 				array(
@@ -323,13 +325,17 @@ class LGF_Admin {
 					// 'variants' => implode( ',', $variants ),
 					'subsets' => $subsets,
 				),
-				$url . $family
+				$url . $alias
 			);
 
-			$transient_key = 'lcg_' . md5( $the_url );
+			$transient_key = 'lcg_s' . md5( $the_url );
 			if ( false === ( $info = get_transient( $transient_key ) ) ) {
 				$response = wp_remote_get( $the_url );
-				$code     = wp_remote_retrieve_response_code( $response );
+				// break early if there's an error here.
+				if ( is_wp_error( $response ) ) {
+					return $response;
+				}
+				$code = wp_remote_retrieve_response_code( $response );
 				if ( 200 === $code ) {
 					$body = wp_remote_retrieve_body( $response );
 					$info = json_decode( $body );
@@ -363,7 +369,7 @@ class LGF_Admin {
 						'%s-%s%s',
 						$san_family,
 						$this->weightClass[ $variant->fontWeight ],
-						( $variant->fontStyle === 'italic' ? 'Italic' : '' ),
+						( $variant->fontStyle === 'italic' ? 'Italic' : '' )
 					);
 
 					// there's no RegularItalic
@@ -372,9 +378,10 @@ class LGF_Admin {
 				}
 			}
 
-			$filename     = $id . '/' . $info->id . '-' . $info->version . '-' . $info->defSubset;
-			$info->total  = count( $info->variants ) * 5;
-			$info->loaded = 0;
+			$filename       = $id . '/' . $info->id . '-' . $info->version . '-' . $info->defSubset;
+			$info->total    = count( $info->variants ) * 5;
+			$info->original = $family;
+			$info->loaded   = 0;
 
 			foreach ( $info->variants as $i => $variant ) {
 				$file = $filename . '-' . $variant->id;
@@ -390,7 +397,10 @@ class LGF_Admin {
 
 			$info->variants = array_values( $info->variants );
 			$fontinfo[]     = $info;
+		}
 
+		if ( empty( $fontinfo ) ) {
+			return new \WP_Error( 'no_fontinfo', esc_html__( 'This font is not supported. Skipped.', 'local-google-fonts' ) );
 		}
 
 		return $fontinfo;
@@ -429,6 +439,20 @@ class LGF_Admin {
 		}
 
 		return $variants;
+
+	}
+
+	private function font_family_alias( $name ) {
+
+		$alias = array(
+			'droid-sans' => 'noto-sans',
+		);
+
+		if ( isset( $alias[ $name ] ) ) {
+			return $alias[ $name ];
+		}
+
+		return $name;
 
 	}
 
