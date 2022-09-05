@@ -40,7 +40,7 @@ class LGF_Admin {
 
 		add_settings_section( 'default', '', '', 'local_google_fonts_settings_page' );
 
-		add_settings_field( 'auto_load', __( 'Autoload', 'local-google-fonts' ), array( $this, 'auto_load_cb' ), 'local_google_fonts_settings_page', 'default' );
+		add_settings_field( 'settings', __( 'Options', 'local-google-fonts' ), array( $this, 'settings' ), 'local_google_fonts_settings_page', 'default' );
 	}
 
 	public function settings_page() {
@@ -102,18 +102,25 @@ class LGF_Admin {
 
 	}
 
-	public function auto_load_cb( $args ) {
+	public function settings( $args ) {
 
 		$options = get_option( 'local_google_fonts' );
-		$checked = isset( $options['auto_load'] );
 		?>
 		<p>
-			<label><input type="checkbox" value="1" name="local_google_fonts[auto_load]" <?php checked( $checked ); ?>>
+			<label><input type="checkbox" value="1" name="local_google_fonts[auto_load]" <?php checked( isset( $options['auto_load'] ) ); ?>>
 				<?php esc_html_e( 'Load Fonts automatically', 'local-google-fonts' ); ?>
 			</label>
 		</p>
 		<p class="description">
 			<?php esc_html_e( 'If you check this option discovered fonts will get loaded automatically.', 'local-google-fonts' ); ?>
+		</p>
+		<p>
+			<label><input type="checkbox" value="1" name="local_google_fonts[bypass]" <?php checked( isset( $options['bypass'] ) ); ?>>
+				<?php esc_html_e( 'ByPass Webfont Loader', 'local-google-fonts' ); ?>
+			</label>
+		</p>
+		<p class="description">
+			<?php esc_html_e( 'bypass Webfont loader.', 'local-google-fonts' ); ?>
 		</p>
 		<?php
 	}
