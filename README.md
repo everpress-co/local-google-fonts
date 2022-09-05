@@ -50,6 +50,19 @@ Yes, if you check the option to load fonts automatically. Otherwise each font se
 
 Yes. The open source fonts from Google Fonts are published under a licenses that allow you to use them on any website, no matter if it’s commercial or personal.
 
+### How to check if my site is loading Google Fonts?
+
+It's easy to check if your site is loading fonts from a third party source:
+
+1. Open the dev tools (Cmd + Opt + I on Mac or F12, or Ctrl + Shift + I on Windows)
+2. Go to the **Network** tab and select the **Fonts** type
+3. Relaod your page to see all fonts loaded on your site.
+4. Check the **Domain** column if it contains domains from a third party (Google is fonts.gstatic.com)
+
+If you host your fonts locally with [Local Google Fonts](https://wordpress.org/plugins/local-google-fonts/) there should be no fonts loaded from the Google servers.
+
+![Dev Tools](.wordpress-org/devtools.png)
+
 ### My fonts do not show up on the settings page, what can I do?
 
 Fonts are discovered once they are used. Try to browse your front end first and get back to the settings page.
