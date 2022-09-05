@@ -89,7 +89,7 @@ class LGF {
 		$class    = LGF_Admin::get_instance();
 		$fontinfo = $class->get_font_info( $src, $handle );
 
-		if ( ! $fontinfo ) {
+		if ( is_wp_error( $fontinfo ) ) {
 			return $src;
 		}
 
