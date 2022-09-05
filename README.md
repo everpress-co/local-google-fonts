@@ -56,7 +56,7 @@ Yes. The open source fonts from Google Fonts are published under a licenses that
 
 ### How to check if my site is loading Google Fonts?
 
-It's easy to check if your site is loading fonts from a third party source (check 2nd screenshot above:
+It's easy to check if your site is loading fonts from a third party source (check [2nd screenshot](https://wordpress.org/plugins/local-google-fonts/#screenshots) above):
 
 1. Open the dev tools (Cmd + Opt + I on Mac or F12, or Ctrl + Shift + I on Windows)
 2. Go to the **Network** tab and select the **Fonts** type
@@ -82,6 +82,13 @@ The Divi theme has a custom implementation of Google Fonts. To use LGF with Divi
 You may have loaded a subset which doesn't included required characters. Check additional subsets on the settings page and reload your font.
 
 ## Changelog
+
+### 0.13
+
+-   improved: better explanations on errors.
+-   improved: Higher propriety for wp_resource_hints to catch them all. Fixes #8
+-   implemented an alias method for no longer supported fonts.
+-   fixed: Syntax error on older PHP versions
 
 ### 0.12
 
