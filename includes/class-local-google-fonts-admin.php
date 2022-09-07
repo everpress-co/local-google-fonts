@@ -340,6 +340,8 @@ class LGF_Admin {
 					$body = wp_remote_retrieve_body( $response );
 					$info = json_decode( $body );
 					set_transient( $transient_key, $info, HOUR_IN_SECONDS );
+				} elseif ( 503 === $code ) {
+					return new \WP_Error( 'service_not_available', sprintf( esc_html__( '%s seems to be down right now. Please try again later.', 'local-google-fonts' ), 'https://google-webfonts-helper.herokuapp.com/' ) );
 				} else {
 					continue;
 				}
