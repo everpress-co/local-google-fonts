@@ -316,7 +316,7 @@ class LGF_Admin {
 		$buffer = get_option( 'local_google_fonts_buffer', array() );
 
 		foreach ( $families as $family => $variants ) {
-			$url     = 'https://google-webfonts-helper.herokuapp.com/api/fonts/';
+			$url     = 'https://local-google-fonts.herokuapp.com/api/fonts/';
 			$alias   = $this->font_family_alias( $family );
 			$subsets = isset( $buffer[ $handle ]['subsets'][ $family ] ) ? implode( ',', array_filter( $buffer[ $handle ]['subsets'][ $family ] ) ) : $args['subset'];
 			$the_url = add_query_arg(
@@ -341,7 +341,7 @@ class LGF_Admin {
 					$info = json_decode( $body );
 					set_transient( $transient_key, $info, HOUR_IN_SECONDS );
 				} elseif ( 503 === $code ) {
-					return new \WP_Error( 'service_not_available', sprintf( esc_html__( '%s seems to be down right now. Please try again later.', 'local-google-fonts' ), 'https://google-webfonts-helper.herokuapp.com/' ) );
+					return new \WP_Error( 'service_not_available', sprintf( esc_html__( '%s seems to be down right now. Please try again later.', 'local-google-fonts' ), $url ) );
 				} else {
 					continue;
 				}
