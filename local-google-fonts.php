@@ -2,7 +2,7 @@
 /*
 Plugin Name: Local Google Fonts
 Description: Host your used Google fonts on your server and make your site GDPR compliant.
-Version: 0.13
+Version: 0.14
 Author: EverPress
 Author URI: https://everpress.co
 License: GPLv2 or later
