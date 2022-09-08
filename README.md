@@ -4,7 +4,7 @@ Contributors: everpress, xaverb
 Tags: googlefonts, google, fonts, gdpr, lgf, font, speed
 Requires at least: 4.6  
 Tested up to: 6.0  
-Stable tag: 0.15
+Stable tag: 0.15  
 Requires PHP: 5.6+  
 License: GPLv2 or later  
 Author: EverPress  
