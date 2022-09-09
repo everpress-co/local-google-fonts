@@ -6,6 +6,18 @@ namespace EverPress;
 class LGF_Admin {
 
 	private static $instance = null;
+	private $weightClass     = array(
+		100 => 'Thin',
+		200 => 'ExtraLight',
+		300 => 'Light',
+		400 => 'Regular',
+		500 => 'Medium',
+		600 => 'SemiBold',
+		700 => 'Bold',
+		800 => 'ExtraBold',
+		900 => 'Black',
+	);
+
 
 	private function __construct() {
 
@@ -15,7 +27,7 @@ class LGF_Admin {
 	}
 
 	public static function get_instance() {
-		if ( self::$instance == null ) {
+		if ( self::$instance === null ) {
 			self::$instance = new LGF_Admin();
 		}
 
@@ -23,7 +35,12 @@ class LGF_Admin {
 	}
 
 	public function register_settings() {
-		register_setting( 'local_google_fonts', 'local_google_fonts', array( $this, 'local_google_fonts_validate' ) );
+
+		register_setting( 'local_google_fonts_settings_page', 'local_google_fonts', array( $this, 'local_google_fonts_validate' ) );
+
+		add_settings_section( 'default', '', '', 'local_google_fonts_settings_page' );
+
+		add_settings_field( 'auto_load', __( 'Autoload', 'local-google-fonts' ), array( $this, 'auto_load_cb' ), 'local_google_fonts_settings_page', 'default' );
 	}
 
 	public function settings_page() {
@@ -40,9 +57,11 @@ class LGF_Admin {
 		wp_enqueue_script( 'local-google-fonts-admin', $url . '/admin.js', array( 'jquery' ), filemtime( $path . '/admin.js' ), true );
 		wp_enqueue_style( 'local-google-fonts-admin', $url . '/admin.css', array(), filemtime( $path . '/admin.css' ) );
 
+		add_action( 'admin_footer_text', array( $this, 'admin_footer_text' ) );
+
 	}
 
-	public function local_google_fonts_validate() {
+	public function local_google_fonts_validate( $options ) {
 
 		$folder     = WP_CONTENT_DIR . '/uploads/fonts';
 		$folder_url = WP_CONTENT_URL . '/uploads/fonts';
@@ -50,6 +69,17 @@ class LGF_Admin {
 		$class = LGF::get_instance();
 
 		$buffer = get_option( 'local_google_fonts_buffer', array() );
+		if ( isset( $_POST['subsets'] ) ) {
+			foreach ( $_POST['subsets'] as $handle => $subsets ) {
+				if ( isset( $buffer[ $handle ] ) ) {
+					if ( ! isset( $buffer[ $handle ]['subsets'] ) ) {
+						$buffer[ $handle ]['subsets'] = array();
+					}
+					$buffer[ $handle ]['subsets'] = $subsets;
+				}
+			}
+		}
+		update_option( 'local_google_fonts_buffer', $buffer );
 
 		if ( isset( $_POST['hostlocal'] ) ) {
 			$handle = $_POST['hostlocal'];
@@ -88,15 +118,65 @@ class LGF_Admin {
 				update_option( 'local_google_fonts_buffer', $buffer );
 			}
 		}
+
+		return $options;
+
 	}
 
-	public function get_font_info( $src ) {
+	public function auto_load_cb( $args ) {
+
+		$options = get_option( 'local_google_fonts' );
+		$checked = isset( $options['auto_load'] );
+		?>
+		<p>
+			<label><input type="checkbox" value="1" name="local_google_fonts[auto_load]" <?php checked( $checked ); ?>>
+				<?php esc_html_e( 'Load Fonts automatically', 'local-google-fonts' ); ?>
+			</label>
+		</p>
+		<p class="description">
+			<?php esc_html_e( 'If you check this option discovered fonts will get loaded automatically.', 'local-google-fonts' ); ?>
+		</p>
+		<?php
+	}
+
+
+	public function render_settings() {
+		// check user capabilities
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		include_once dirname( LGF_PLUGIN_FILE ) . '/views/settings.php';
+
+	}
+
+
+	public function get_font_info( $src, $handle = null ) {
+
+		$folder     = WP_CONTENT_DIR . '/uploads/fonts';
+		$folder_url = WP_CONTENT_URL . '/uploads/fonts';
+
+		$id = md5( $src );
 
 		// a bit sanitation as URLs are often registered with esc_url
 		$src = str_replace( array( '#038;', '&amp;' ), '&', $src );
 
-		$params = wp_parse_url( $src );
-		wp_parse_str( $params['query'], $args );
+		$query = wp_parse_url( $src, PHP_URL_QUERY );
+		wp_parse_str( $query, $args );
+
+		// handling of multiple "family" arguments
+		$parts  = explode( '&', $query );
+		$groups = array();
+		foreach ( $parts as $part ) {
+			if ( 0 === strpos( $part, 'family=' ) ) {
+				$groups[] = str_replace( 'family=', '', $part );
+			}
+		}
+
+		if ( ! empty( $groups ) ) {
+			$args['family'] = rawurldecode( implode( '|', $groups ) );
+		}
+
 		$args = wp_parse_args(
 			$args,
 			array(
@@ -121,23 +201,50 @@ class LGF_Admin {
 			}
 		}
 
+		// do not load them as its most likely some helper font thing
+		if ( count( $families ) > 30 ) {
+			return new \WP_Error( 'to_many_families', esc_html__( 'This source contains more than 30 fonts and is most likely used as helper for your theme. Skipped.', 'local-google-fonts' ) );
+		}
+
+		$buffer = get_option( 'local_google_fonts_buffer', array() );
+
 		foreach ( $families as $family => $variants ) {
-			$url      = 'https://google-webfonts-helper.herokuapp.com/api/fonts/';
-			$the_url  = add_query_arg(
+			$url     = 'https://local-google-fonts.herokuapp.com/api/fonts/';
+			$alias   = $this->font_family_alias( $family );
+			$subsets = isset( $buffer[ $handle ]['subsets'][ $family ] ) ? implode( ',', array_filter( $buffer[ $handle ]['subsets'][ $family ] ) ) : $args['subset'];
+			$the_url = add_query_arg(
 				array(
 					// doesn't seem to have an effect so we filter it later
-					'variants' => implode( ',', $variants ),
-					'subsets'  => $args['subset'],
+					// 'variants' => implode( ',', $variants ),
+					'subsets' => $subsets,
 				),
-				$url . $family
+				$url . $alias
 			);
-			$response = wp_remote_get( $the_url );
-			$code     = wp_remote_retrieve_response_code( $response );
 
-			if ( 200 == $code ) {
-				$body     = wp_remote_retrieve_body( $response );
-				$info     = json_decode( $body );
+			$transient_key = 'lcg_s' . md5( $the_url );
+			if ( false === ( $info = get_transient( $transient_key ) ) ) {
+				$response = wp_remote_get( $the_url );
+				// break early if there's an error here.
+				if ( is_wp_error( $response ) ) {
+					return $response;
+				}
+				$code = wp_remote_retrieve_response_code( $response );
+				if ( 200 === $code ) {
+					$body = wp_remote_retrieve_body( $response );
+					$info = json_decode( $body );
+					set_transient( $transient_key, $info, HOUR_IN_SECONDS );
+				} elseif ( 503 === $code ) {
+					return new \WP_Error( 'service_not_available', sprintf( esc_html__( '%s seems to be down right now. Please try again later.', 'local-google-fonts' ), $url ) );
+				} else {
+					continue;
+				}
+			}
+
+			// if only regular is present we actually need all of them
+			if ( count( $variants ) > 1 ) {
+				
 				$filename = $info->id . '-' . $info->version . '-' . $info->defSubset;
+
 				foreach ( $info->variants as $i => $variant ) {
 					$info->variants[ $i ]->filename = $filename . '-' . $variant->id;
 					// special case for italic 400
@@ -147,10 +254,51 @@ class LGF_Admin {
 						unset( $info->variants[ $i ] );
 					}
 				}
-				$info->variants = array_values( $info->variants );
-				$fontinfo[]     = $info;
-
 			}
+
+			// fonts with render bug /https://github.com/everpress-co/local-google-fonts/issues/1)
+			if ( in_array( $family, array( 'montserrat', 'jost', 'inter', 'exo-2' ) ) ) {
+
+				foreach ( $info->variants as $i => $variant ) {
+
+					$san_family = str_replace( ' ', '', $info->family );
+
+					$font_name = sprintf(
+						'%s-%s%s',
+						$san_family,
+						$this->weightClass[ $variant->fontWeight ],
+						( $variant->fontStyle === 'italic' ? 'Italic' : '' )
+					);
+
+					// there's no RegularItalic
+					$font_name                   = str_replace( $san_family . '-RegularItalic', $san_family . '-Italic', $font_name );
+					$info->variants[ $i ]->woff2 = 'https://github.com/everpress-co/local-google-fonts-render-bug/raw/main/fonts/' . $family . '/' . $font_name . '.woff2';
+				}
+			}
+
+			$filename       = $id . '/' . $info->id . '-' . $info->version . '-' . $info->defSubset;
+			$info->total    = count( $info->variants ) * 5;
+			$info->original = $family;
+			$info->loaded   = 0;
+
+			foreach ( $info->variants as $i => $variant ) {
+				$file = $filename . '-' . $variant->id;
+
+				$info->variants[ $i ]->loaded = array();
+				foreach ( array( 'woff', 'svg', 'woff2', 'ttf', 'eot' ) as $ext ) {
+					if ( file_exists( $folder . '/' . $file . '.' . $ext ) ) {
+						$info->loaded++;
+						$info->variants[ $i ]->loaded[ $ext ] = $file . '.' . $ext;
+					}
+				}
+			}
+
+			$info->variants = array_values( $info->variants );
+			$fontinfo[]     = $info;
+		}
+
+		if ( empty( $fontinfo ) ) {
+			return new \WP_Error( 'no_fontinfo', esc_html__( 'This font is not supported. Skipped.', 'local-google-fonts' ) );
 		}
 
 		return $fontinfo;
@@ -183,6 +331,8 @@ class LGF_Admin {
 		} else {
 			// handle XXXi variants
 			$variants = preg_replace( '/(\d{3}+)i/', '$1italic', $variants );
+			// handle XXXitalic is converted into XXXitalictalic
+			$variants = str_replace( 'italictalic', 'italic', $variants );
 			$variants = explode( ',', $variants );
 		}
 
@@ -190,100 +340,21 @@ class LGF_Admin {
 
 	}
 
-	public function render_settings() {
+	private function font_family_alias( $name ) {
 
-		$buffer = get_option( 'local_google_fonts_buffer', array() );
+		$alias = array(
+			'droid-sans' => 'noto-sans',
+		);
 
-		$folder     = WP_CONTENT_DIR . '/uploads/fonts';
-		$folder_url = WP_CONTENT_URL . '/uploads/fonts';
-		$count      = count( $buffer );
+		if ( isset( $alias[ $name ] ) ) {
+			return $alias[ $name ];
+		}
 
-		?>
-	<div class="wrap">
-	<h1><?php printf( esc_html__( _n( '%d Google font source found on your site.', '%d Google font sources found on your site.', $count, 'mailster' ) ), $count ); ?></h1>
-
-	<p><?php esc_html_e( 'This page shows all discovered Google Fonts over time. If you miss a font start browsing your front end so they end up showing here.', 'local-google-fonts' ); ?></p>
-	
-		<?php if ( ! $count ) : ?>
-		<p><?php esc_html_e( 'You have currently no Google fonts in use on your site.', 'local-google-fonts' ); ?></p>
-	<?php endif; ?>
-
-	<form action="options.php" method="post">
-		<?php
-		settings_fields( 'local_google_fonts' );
-		do_settings_sections( 'local_google_fonts_section' );
-		?>
-
-		<?php foreach ( $buffer as $id => $data ) : ?>
-
-		<h2><?php esc_html_e( 'Handle', 'local-google-fonts' ); ?>: <code><?php esc_html_e( $data['handle'] ); ?></code></h2>
-		<p><?php esc_html_e( 'Original URL', 'local-google-fonts' ); ?>: <code><?php echo rawurldecode( $data['src'] ); ?></code> <a href="<?php echo esc_url( $data['src'] ); ?>" class="dashicons dashicons-external" target="_blank" title="<?php esc_attr_e( 'show original URL', 'local-google-fonts' ); ?>"></a></p>
-
-	<table class="wp-list-table widefat fixed striped table-view-list ">
-		<thead>
-			<tr>
-				<th scope="col" id="name" class="manage-column column-name column-primary" style="width: 150px"><?php esc_html_e( 'Name', 'local-google-fonts' ); ?></th>
-				<th scope="col" id="description" class="manage-column column-description"><?php esc_html_e( 'Variants', 'local-google-fonts' ); ?></th>
-				<th scope="col" id="auto-updates" class="manage-column column-auto-updates"  style="width: 250px"><?php esc_html_e( 'Status', 'local-google-fonts' ); ?></th>
-			</tr>
-		</thead>
-		<tbody>
-			<?php $fontinfo = $this->get_font_info( $data['src'] ); ?>
-
-			<?php foreach ( $fontinfo as $i => $set ) : ?>
-			<tr>
-				<td><strong><?php echo esc_html( $set->family ); ?></strong><br>
-				</td>
-				<td>
-					<p class="code">
-					<?php foreach ( $set->variants as $variant ) : ?>
-							<span class="variant"><?php printf( '%s %s', $variant->fontStyle, $variant->fontWeight ); ?></span> 
-					<?php endforeach ?>
-					</p>
-					<details>
-						<summary><strong><?php printf( '%d files from Google Servers', count( $set->variants ) * 5 ); ?></strong></summary>
-						<div style="max-height: 200px; overflow: scroll;font-size: small;white-space: nowrap; overflow: hidden; overflow-y: auto;" class="code">
-						<?php foreach ( $set->variants as $variant ) : ?>
-							<p>
-							<strong><?php printf( '%s %s', $variant->fontStyle, $variant->fontWeight ); ?></strong><br>
-							<code><?php echo esc_url( $variant->woff2 ); ?></code><br>
-							<code><?php echo esc_url( $variant->ttf ); ?></code><br>
-							<code><?php echo esc_url( $variant->svg ); ?></code><br>
-							<code><?php echo esc_url( $variant->eot ); ?></code><br>
-							<code><?php echo esc_url( $variant->woff ); ?></code>
-							</p>
-						<?php endforeach ?>
-						</div>
-					</details>
-				</td>
-				<td>
-					<?php if ( is_dir( $folder . '/' . $data['id'] ) ) : ?>
-						<strong class="">✔</strong> loaded, served from your server
-					<?php else : ?>
-						<strong class="wp-ui-text-notification">✕</strong> not loaded, served from Google servers
-					<?php endif; ?>
-				
-				</td>
-
-			</tr>
-		<?php endforeach ?>						
-		</tbody>
-	</table>		
-		<p>
-			<button class="host-locally button button-primary" name="hostlocal" value="<?php echo esc_attr( $data['handle'] ); ?>"><?php esc_html_e( 'Host locally', 'local-google-fonts' ); ?></button>
-			<?php if ( is_dir( $folder . '/' . $data['id'] ) ) : ?>
-			<button class="host-locally button button-secondary" name="preload" value="<?php echo esc_attr( $data['handle'] ); ?>"><?php esc_html_e( 'Preload', 'local-google-fonts' ); ?></button>
-			<button class="host-locally button button-link-delete" name="removelocal" value="<?php echo esc_attr( $data['handle'] ); ?>"><?php esc_html_e( 'Remove hosted files', 'local-google-fonts' ); ?></button>
-			<?php endif; ?>
-		</p>
-	<?php endforeach ?>
-	<p class="textright">
-		<button class="host-locally button button-link-delete" name="flush" value="1"><?php esc_html_e( 'Remove all stored data', 'local-google-fonts' ); ?></button>
-	</p>
-	</form>
-</div>
-		<?php
+		return $name;
 
 	}
 
+	public function admin_footer_text( $default ) {
+		return sprintf( esc_html__( 'If you like %1$s please leave a %2$s&#9733;&#9733;&#9733;&#9733;&#9733;%3$s rating. Thanks in advance!', 'local-google-fonts' ), '<strong>Local Google Fonts</strong>', '<a href="https://wordpress.org/support/view/plugin-reviews/local-google-fonts?filter=5#new-post" target="_blank" rel="noopener noreferrer">', '</a>' );
+	}
 }

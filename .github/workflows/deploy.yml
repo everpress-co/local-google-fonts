@@ -11,8 +11,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@master
       - name: WordPress Plugin Deploy
-        uses: evrpress/action-wordpress-plugin-deploy@develop
+        uses: everpress-co/action-wordpress-plugin-deploy@develop
         with:
           generate-zip: true
         env:
           SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
+          SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
