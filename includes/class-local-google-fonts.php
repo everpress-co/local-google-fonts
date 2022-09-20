@@ -124,7 +124,7 @@ class LGF {
 
 				$style .= "\tsrc: url('" . $file . ".eot?v=$time');\n";
 				$style .= "\tsrc: local(''),\n";
-				$style .= "\t\turl('" . $file . ".eot?v=$time?#iefix') format('embedded-opentype'),\n";
+				$style .= "\t\turl('" . $file . ".eot?v=$time#iefix') format('embedded-opentype'),\n";
 
 				if ( $v->woff2 ) {
 					$style .= "\t\turl('" . $file . ".woff2?v=$time') format('woff2'),\n";
