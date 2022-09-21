@@ -9,6 +9,7 @@ Requires PHP: 5.6+
 License: GPLv2 or later  
 Author: EverPress  
 Author URI: https://everpress.co
+Donate link: https://evp.to/donate
 
 ## Description
 
