@@ -86,7 +86,7 @@ You may have loaded a subset which doesn't included required characters. Check a
 
 ### 0.16
 
--   using absolute path to support Google Fonts in [Mailster](https://mailster.co).
+-   using absolute path to support Google Fonts in [Mailster](https://mailster.co/?utm_campaign=wporg&utm_source=Local+Google+Fonts&utm_medium=readme).
 
 ### 0.15
 
