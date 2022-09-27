@@ -20,6 +20,11 @@ summary {
 .main {
 	flex-basis: 100%;
 }
+.main code.original-url {
+	line-break: anywhere;
+	font-size: 12px;
+	display: block;
+}
 
 .lgf-side {
 	width: 240px;

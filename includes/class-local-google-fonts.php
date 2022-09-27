@@ -175,6 +175,10 @@ class LGF {
 
 	public function google_to_local_url( $src, $handle = null ) {
 
+		$org = $src;
+
+		$src = remove_query_arg( 'ver', $src );
+
 		$id = md5( $src );
 
 		$folder     = WP_CONTENT_DIR . '/uploads/fonts';
@@ -189,7 +193,7 @@ class LGF {
 
 			// do not load on customizer preview.
 			if ( is_customize_preview() ) {
-				return $src;
+				return $org;
 			}
 
 			if ( is_null( $handle ) ) {
@@ -208,6 +212,8 @@ class LGF {
 			$options = get_option( 'local_google_fonts' );
 			if ( isset( $options['auto_load'] ) ) {
 				$src = $this->process_url( $src, $handle );
+			}else{
+				$src = $org;
 			}
 		}
 

@@ -33,7 +33,7 @@ if ( ! $count ) :
 		<?php foreach ( $buffer as $id => $data ) : ?>
 
 	<h3><?php esc_html_e( 'Handle', 'local-google-fonts' ); ?>: <code><?php esc_html_e( $data['handle'] ); ?></code></h3>
-	<p><?php esc_html_e( 'Original URL', 'local-google-fonts' ); ?>: <code><?php echo rawurldecode( $data['src'] ); ?></code> <a href="<?php echo esc_url( $data['src'] ); ?>" class="dashicons dashicons-external" target="_blank" title="<?php esc_attr_e( 'show original URL', 'local-google-fonts' ); ?>"></a></p>
+	<p><?php esc_html_e( 'Original URL', 'local-google-fonts' ); ?>: <a href="<?php echo esc_url( $data['src'] ); ?>" class="dashicons dashicons-external" target="_blank" title="<?php esc_attr_e( 'show original URL', 'local-google-fonts' ); ?>"></a><code class="original-url"><?php echo rawurldecode( $data['src'] ); ?></code></p>
 
 			<?php $fontinfo = $this->get_font_info( $data['src'], $data['handle'] ); ?>
 
