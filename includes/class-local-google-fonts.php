@@ -36,7 +36,7 @@ class LGF {
 			$urls = array_diff( $urls, array( 'fonts.googleapis.com' ) );
 		} elseif ( 'preconnect' === $relation_type ) {
 			foreach ( $urls as $key => $url ) {
-				if ( false !== strpos( $url['href'], '//fonts.gstatic.com' ) ) {
+				if ( isset( $url['href'] ) && false !== strpos( $url['href'], '//fonts.gstatic.com' ) ) {
 					unset( $urls[ $key ] );
 				}
 			}
