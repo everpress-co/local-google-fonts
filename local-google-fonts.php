@@ -19,7 +19,9 @@ if ( ! defined( 'LGF_PLUGIN_FILE' ) ) {
 if ( ! class_exists( 'EverPress\LGF' ) ) {
 	include_once 'includes/class-local-google-fonts.php';
 	include_once 'includes/class-local-google-fonts-admin.php';
+	include_once 'includes/class-local-google-fonts-upgrade.php';
 }
 
 LGF::get_instance();
 LGF_Admin::get_instance();
+LGF_Upgrade::get_instance();
