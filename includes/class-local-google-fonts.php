@@ -11,6 +11,7 @@ class LGF {
 
 	private function __construct() {
 
+		register_activation_hook( LGF_PLUGIN_FILE, array( $this, 'activate' ) );
 		register_deactivation_hook( LGF_PLUGIN_FILE, array( $this, 'deactivate' ) );
 
 		add_filter( 'style_loader_src', array( $this, 'switch_stylesheet_src' ), 10, 2 );
@@ -19,6 +20,8 @@ class LGF {
 
 		add_filter( 'local_google_fonts_replace_in_content', array( $this, 'replace_in_content' ) );
 		add_filter( 'local_google_fonts_replace_url', array( $this, 'google_to_local_url' ), 10, 2 );
+
+		add_action( 'admin_notices', array( $this, 'maybe_welcome_message' ) );
 
 	}
 
@@ -247,6 +250,18 @@ class LGF {
 		return true;
 	}
 
+	public function maybe_welcome_message() {
+
+		if ( get_option( 'local_google_fonts_buffer' ) || get_option( 'local_google_fonts' ) ) {
+			return;
+		}
+		?>
+	<div class="notice notice-info">
+		<p><?php printf( esc_html__( 'Thanks for using Local Google Fonts. Please check the %s.', 'local-google-fonts' ), '<a href="' . admin_url( 'options-general.php?page=lgf-settings' ) . '">' . esc_html__( 'settings page', 'local-google-fonts' ) . '</a>' ); ?></p>
+	</div>
+		<?php
+	}
+
 	private function wp_filesystem() {
 		global $wp_filesystem;
 
@@ -259,6 +274,9 @@ class LGF {
 		return $wp_filesystem;
 
 	}
+
+	public function activate() {}
+
 
 	public function deactivate() {
 		$this->clear();

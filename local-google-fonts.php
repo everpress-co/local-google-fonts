@@ -21,5 +21,5 @@ if ( ! class_exists( 'EverPress\LGF' ) ) {
 	include_once 'includes/class-local-google-fonts-admin.php';
 }
 
-add_action( 'plugins_loaded', array( 'EverPress\LGF', 'get_instance' ) );
-add_action( 'plugins_loaded', array( 'EverPress\LGF_Admin', 'get_instance' ) );
+LGF::get_instance();
+LGF_Admin::get_instance();
