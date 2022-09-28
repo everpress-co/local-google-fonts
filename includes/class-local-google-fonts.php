@@ -39,10 +39,10 @@ class LGF {
 			$urls = array_diff( $urls, array( 'fonts.googleapis.com' ) );
 		} elseif ( 'preconnect' === $relation_type ) {
 			foreach ( $urls as $key => $url ) {
-				if(!isset($url['href'])){
+				if ( ! isset( $url['href'] ) ) {
 					continue;
 				}
-				if(preg_match('/\/\/fonts\.(gstatic|googleapis)\.com/', $url['href'])){
+				if ( preg_match( '/\/\/fonts\.(gstatic|googleapis)\.com/', $url['href'] ) ) {
 					unset( $urls[ $key ] );
 				}
 			}
@@ -215,7 +215,7 @@ class LGF {
 			$options = get_option( 'local_google_fonts' );
 			if ( isset( $options['auto_load'] ) ) {
 				$src = $this->process_url( $src, $handle );
-			}else{
+			} else {
 				$src = $org;
 			}
 		}
