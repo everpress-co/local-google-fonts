@@ -4,7 +4,7 @@ Contributors: everpress, xaverb
 Tags: googlefonts, google, fonts, gdpr, lgf, font, speed  
 Requires at least: 4.6  
 Tested up to: 6.0  
-Stable tag: 0.17  
+Stable tag: 0.18  
 Requires PHP: 5.6+  
 License: GPLv2 or later  
 Author: EverPress  
@@ -83,6 +83,10 @@ The Divi theme has a custom implementation of Google Fonts. To use LGF with Divi
 You may have loaded a subset which doesn't included required characters. Check additional subsets on the settings page and reload your font.
 
 ## Changelog
+
+### 0.18
+
+-   do not use `remove_query_arg` to strip args as it can break some URLs
 
 ### 0.17
 

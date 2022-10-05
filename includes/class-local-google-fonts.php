@@ -55,7 +55,7 @@ class LGF {
 	public function process_url( $src, $handle ) {
 
 		// remove 'ver' query arg as it is added by WP
-		$src = remove_query_arg( 'ver', $src );
+		$src = preg_replace('/&ver=([^&]+)/', '', $src);
 
 		$id = md5( $src );
 
@@ -184,7 +184,7 @@ class LGF {
 		$org = $src;
 
 		// remove 'ver' query arg as it is added by WP
-		$src = remove_query_arg( 'ver', $src );
+		$src = preg_replace('/&ver=([^&]+)/', '', $src);
 
 		$id = md5( $src );
 

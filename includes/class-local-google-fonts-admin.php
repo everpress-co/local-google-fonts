@@ -136,7 +136,7 @@ class LGF_Admin {
 		$folder_url = WP_CONTENT_URL . '/uploads/fonts';
 
 		// remove 'ver' query arg as it is added by WP
-		$src = remove_query_arg( 'ver', $src );
+		$src = preg_replace('/&ver=([^&]+)/', '', $src);
 
 		$id = md5( $src );
 
