@@ -78,20 +78,8 @@ class LGF_Upgrade {
 	/*
 	 * run updates for specific versions
 	 */
-	private function update_0_14() {
-		error_log( print_r( __FUNCTION__, true ) );
-	}
-	private function update_0_15() {
-		error_log( print_r( __FUNCTION__, true ) );
-	}
 	private function update_0_17() {
-		error_log( print_r( __FUNCTION__, true ) );
-	}
-	private function update_0_18() {
-		error_log( print_r( __FUNCTION__, true ) );
-	}
-	private function update_0_19() {
-		error_log( print_r( __FUNCTION__, true ) );
+		
 	}
 
 
