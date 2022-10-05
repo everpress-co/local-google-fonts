@@ -54,6 +54,9 @@ class LGF {
 
 	public function process_url( $src, $handle ) {
 
+		// remove 'ver' query arg as it is added by WP
+		$src = remove_query_arg( 'ver', $src );
+
 		$id = md5( $src );
 
 		if ( ! function_exists( 'download_url' ) ) {
@@ -180,6 +183,7 @@ class LGF {
 
 		$org = $src;
 
+		// remove 'ver' query arg as it is added by WP
 		$src = remove_query_arg( 'ver', $src );
 
 		$id = md5( $src );
