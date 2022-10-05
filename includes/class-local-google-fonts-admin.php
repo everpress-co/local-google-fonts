@@ -54,8 +54,8 @@ class LGF_Admin {
 		$url  = plugin_dir_url( LGF_PLUGIN_FILE ) . 'assets';
 		$path = plugin_dir_path( LGF_PLUGIN_FILE ) . 'assets';
 
-		wp_enqueue_script( 'local-google-fonts-admin', $url . '/admin.js', array( 'jquery' ), filemtime( $path . '/admin.js' ), true );
-		wp_enqueue_style( 'local-google-fonts-admin', $url . '/admin.css', array(), filemtime( $path . '/admin.css' ) );
+		wp_enqueue_script( 'local-google-fonts-admin', $url . '/admin.js', array( 'thickbox', 'jquery' ), filemtime( $path . '/admin.js' ), true );
+		wp_enqueue_style( 'local-google-fonts-admin', $url . '/admin.css', array( 'thickbox' ), filemtime( $path . '/admin.css' ) );
 
 		add_action( 'admin_footer_text', array( $this, 'admin_footer_text' ) );
 
@@ -125,7 +125,7 @@ class LGF_Admin {
 			return;
 		}
 
-		include_once dirname( LGF_PLUGIN_FILE ).'/views/settings.php';
+		include_once dirname( LGF_PLUGIN_FILE ) . '/views/settings.php';
 
 	}
 
@@ -134,6 +134,9 @@ class LGF_Admin {
 
 		$folder     = WP_CONTENT_DIR . '/uploads/fonts';
 		$folder_url = WP_CONTENT_URL . '/uploads/fonts';
+
+		// remove 'ver' query arg as it is added by WP
+		$src = remove_query_arg( 'ver', $src );
 
 		$id = md5( $src );
 

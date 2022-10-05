@@ -4,7 +4,7 @@ Contributors: everpress, xaverb
 Tags: googlefonts, google, fonts, gdpr, lgf, font, speed  
 Requires at least: 4.6  
 Tested up to: 6.0  
-Stable tag: 0.16  
+Stable tag: 0.17  
 Requires PHP: 5.6+  
 License: GPLv2 or later  
 Author: EverPress  
@@ -84,9 +84,17 @@ You may have loaded a subset which doesn't included required characters. Check a
 
 ## Changelog
 
+### 0.17
+
+-   remove `ver` query argument from URLs as they are added by WordPress. _Please review settings as fonts may have to be reloaded_
+-   introduced upgrade class for future updates
+-   added: welcome message after plugin activation
+-   added Codeable banner
+-   fixed: PHP warning on missing key
+
 ### 0.16
 
--   using absolute path to support Google Fonts in [Mailster](https://mailster.co).
+-   using absolute path to support Google Fonts in [Mailster](https://mailster.co/?utm_campaign=wporg&utm_source=Local+Google+Fonts&utm_medium=readme).
 
 ### 0.15
 

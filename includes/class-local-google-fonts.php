@@ -11,6 +11,7 @@ class LGF {
 
 	private function __construct() {
 
+		register_activation_hook( LGF_PLUGIN_FILE, array( $this, 'activate' ) );
 		register_deactivation_hook( LGF_PLUGIN_FILE, array( $this, 'deactivate' ) );
 
 		add_filter( 'style_loader_src', array( $this, 'switch_stylesheet_src' ), 10, 2 );
@@ -19,6 +20,8 @@ class LGF {
 
 		add_filter( 'local_google_fonts_replace_in_content', array( $this, 'replace_in_content' ) );
 		add_filter( 'local_google_fonts_replace_url', array( $this, 'google_to_local_url' ), 10, 2 );
+
+		add_action( 'admin_notices', array( $this, 'maybe_welcome_message' ) );
 
 	}
 
@@ -36,7 +39,10 @@ class LGF {
 			$urls = array_diff( $urls, array( 'fonts.googleapis.com' ) );
 		} elseif ( 'preconnect' === $relation_type ) {
 			foreach ( $urls as $key => $url ) {
-				if ( false !== strpos( $url['href'], '//fonts.gstatic.com' ) ) {
+				if ( ! isset( $url['href'] ) ) {
+					continue;
+				}
+				if ( preg_match( '/\/\/fonts\.(gstatic|googleapis)\.com/', $url['href'] ) ) {
 					unset( $urls[ $key ] );
 				}
 			}
@@ -47,6 +53,9 @@ class LGF {
 
 
 	public function process_url( $src, $handle ) {
+
+		// remove 'ver' query arg as it is added by WP
+		$src = remove_query_arg( 'ver', $src );
 
 		$id = md5( $src );
 
@@ -172,6 +181,11 @@ class LGF {
 
 	public function google_to_local_url( $src, $handle = null ) {
 
+		$org = $src;
+
+		// remove 'ver' query arg as it is added by WP
+		$src = remove_query_arg( 'ver', $src );
+
 		$id = md5( $src );
 
 		$folder     = WP_CONTENT_DIR . '/uploads/fonts';
@@ -186,7 +200,7 @@ class LGF {
 
 			// do not load on customizer preview.
 			if ( is_customize_preview() ) {
-				return $src;
+				return $org;
 			}
 
 			if ( is_null( $handle ) ) {
@@ -205,6 +219,8 @@ class LGF {
 			$options = get_option( 'local_google_fonts' );
 			if ( isset( $options['auto_load'] ) ) {
 				$src = $this->process_url( $src, $handle );
+			} else {
+				$src = $org;
 			}
 		}
 
@@ -247,6 +263,18 @@ class LGF {
 		return true;
 	}
 
+	public function maybe_welcome_message() {
+
+		if ( get_option( 'local_google_fonts_buffer' ) || get_option( 'local_google_fonts' ) ) {
+			return;
+		}
+		?>
+	<div class="notice notice-info">
+		<p><?php printf( esc_html__( 'Thanks for using Local Google Fonts. Please check the %s.', 'local-google-fonts' ), '<a href="' . admin_url( 'options-general.php?page=lgf-settings' ) . '">' . esc_html__( 'settings page', 'local-google-fonts' ) . '</a>' ); ?></p>
+	</div>
+		<?php
+	}
+
 	private function wp_filesystem() {
 		global $wp_filesystem;
 
@@ -259,6 +287,9 @@ class LGF {
 		return $wp_filesystem;
 
 	}
+
+	public function activate() {}
+
 
 	public function deactivate() {
 		$this->clear();
