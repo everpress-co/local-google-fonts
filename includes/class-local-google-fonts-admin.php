@@ -139,8 +139,8 @@ class LGF_Admin {
 
 	public function get_font_info( $src, $handle = null ) {
 
-		$folder     = WP_CONTENT_DIR . '/uploads/fonts';
-		$folder_url = WP_CONTENT_URL . '/uploads/fonts';
+		$upload_dir = wp_get_upload_dir();
+		$folder     = $upload_dir['error'] ? WP_CONTENT_DIR . '/uploads/fonts' : $upload_dir['basedir'] . '/fonts';
 
 		// remove 'ver' query arg as it is added by WP
 		$src = preg_replace('/&ver=([^&]+)/', '', $src);
