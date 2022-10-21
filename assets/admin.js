@@ -13,7 +13,7 @@ jQuery(document).ready(function ($) {
 
 		args.set('origin', location.origin);
 		args.set('affiliateUrl', location.href);
-		args.set('shortcode', 'adTZj');
+		args.set('shortcode', 'BmTD5');
 		args.set('TB_iframe', 'true');
 		args.set('height', 800);
 		args.set('width', 900);

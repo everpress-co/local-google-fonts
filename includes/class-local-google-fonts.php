@@ -6,7 +6,6 @@ class LGF {
 
 	private static $instance = null;
 
-	private $seed = AUTH_SALT;
 	private $upload_dir;
 
 	private function __construct() {
@@ -55,7 +54,7 @@ class LGF {
 	public function process_url( $src, $handle ) {
 
 		// remove 'ver' query arg as it is added by WP
-		$src = preg_replace('/&ver=([^&]+)/', '', $src);
+		$src = preg_replace( '/&ver=([^&]+)/', '', $src );
 
 		$id = md5( $src );
 
@@ -77,6 +76,7 @@ class LGF {
 		$style .= ' * ' . sprintf( 'Font file created by %s %s', $plugin_data['Name'], $plugin_data['Version'] ) . "\n";
 		$style .= ' * Created: ' . date( 'r' ) . "\n";
 		$style .= ' * Handle: ' . esc_attr( $handle ) . "\n";
+		$style .= ' * Original URL: ' . esc_attr( $src ) . "\n";
 		$style .= "*/\n\n";
 
 		$query = wp_parse_url( $src, PHP_URL_QUERY );
@@ -89,68 +89,44 @@ class LGF {
 			)
 		);
 
-		$folder     = WP_CONTENT_DIR . '/uploads/fonts';
-		$folder_url = WP_CONTENT_URL . '/uploads/fonts';
+		$upload_dir = wp_get_upload_dir();
+		$folder     = $upload_dir['error'] ? WP_CONTENT_DIR . '/uploads/fonts' : $upload_dir['basedir'] . '/fonts';
+		$folder_url = $upload_dir['error'] ? WP_CONTENT_URL . '/uploads/fonts' : $upload_dir['baseurl'] . '/fonts';
 
 		$new_src = $folder_url . '/' . $id . '/font.css';
 		$new_dir = $folder . '/' . $id . '/font.css';
 
-		$class    = LGF_Admin::get_instance();
-		$fontinfo = $class->get_font_info( $src, $handle );
+		$class  = LGF_Admin::get_instance();
+		$parser = $class->get_parser( $src );
 
-		if ( is_wp_error( $fontinfo ) ) {
+		$info      = $parser->get_info();
+		$stylesheet = $parser->get_remote_styles();
+
+		if ( is_wp_error( $parser ) ) {
 			return $src;
 		}
 
-		foreach ( $fontinfo as $font ) {
-			$filename = $font->id . '-' . $font->version . '-' . $font->defSubset;
-			foreach ( $font->variants as $v ) {
+		foreach ( $info as $font ) {
 
-				$file = $filename . '-' . $v->id;
-				if ( ! is_dir( $folder . '/' . $id ) ) {
-					wp_mkdir_p( $folder . '/' . $id );
-				}
-				foreach ( array( 'woff', 'svg', 'woff2', 'ttf', 'eot' ) as $ext ) {
+			foreach ( $font['faces'] as $face ) {
 
-					if ( $v->{$ext} ) {
-						$tmp_file = download_url( $v->{$ext} );
-						if ( ! is_wp_error( $tmp_file ) ) {
-							$filepath = $folder . '/' . $id . '/' . $file . '.' . $ext;
-							$WP_Filesystem->copy( $tmp_file, $filepath );
-							$WP_Filesystem->delete( $tmp_file );
-						} else {
-							$v->{$ext} = null;
-						}
+				$tmp_file = download_url( $face['remote_url'] );
+				if ( ! is_wp_error( $tmp_file ) ) {
+					if ( ! is_dir( dirname( $face['file'] ) ) ) {
+						wp_mkdir_p( dirname( $face['file'] ) );
 					}
-				}
-				$style .= "@font-face {\n";
-				$style .= "\tfont-family: " . $v->fontFamily . ";\n";
-				$style .= "\tfont-style: " . $v->fontStyle . ";\n";
-				$style .= "\tfont-weight: " . $v->fontWeight . ";\n";
-				if ( $args['display'] && $args['display'] !== 'auto' ) {
-					$style .= "\tfont-display: " . $args['display'] . ";\n";
-				}
+					if ( $WP_Filesystem->copy( $tmp_file, $face['file'] ) ) {
+						$WP_Filesystem->delete( $tmp_file );
+						$local_file = add_query_arg('c', time(), $face['local_url']);
+						$stylesheet = str_replace( $face['remote_url'], $local_file, $stylesheet );
+					}
+				} else {
 
-				$style .= "\tsrc: url('" . $folder_url . '/' . $id . '/' . $file . ".eot?v=$time');\n";
-				$style .= "\tsrc: local(''),\n";
-				$style .= "\t\turl('" . $folder_url . '/' . $id . '/' . $file . ".eot?v=$time#iefix') format('embedded-opentype'),\n";
-
-				if ( $v->woff2 ) {
-					$style .= "\t\turl('" . $folder_url . '/' . $id . '/' . $file . ".woff2?v=$time') format('woff2'),\n";
 				}
-				if ( $v->woff ) {
-					$style .= "\t\turl('" . $folder_url . '/' . $id . '/' . $file . ".woff?v=$time') format('woff'),\n";
-				}
-				if ( $v->ttf ) {
-					$style .= "\t\turl('" . $folder_url . '/' . $id . '/' . $file . ".ttf?v=$time') format('truetype'),\n";
-				}
-				if ( $v->svg ) {
-					$style .= "\t\turl('" . $folder_url . '/' . $id . '/' . $file . ".svg?v=$time" . strrchr( $v->svg, '#' ) . "') format('svg');\n";
-				}
-				$style .= "}\n\n";
-
 			}
 		}
+
+		$style .= $stylesheet;
 
 		$WP_Filesystem->put_contents( $new_dir, $style );
 
@@ -184,12 +160,13 @@ class LGF {
 		$org = $src;
 
 		// remove 'ver' query arg as it is added by WP
-		$src = preg_replace('/&ver=([^&]+)/', '', $src);
+		$src = preg_replace( '/&ver=([^&]+)/', '', $src );
 
 		$id = md5( $src );
 
-		$folder     = WP_CONTENT_DIR . '/uploads/fonts';
-		$folder_url = WP_CONTENT_URL . '/uploads/fonts';
+		$upload_dir = wp_get_upload_dir();
+		$folder     = $upload_dir['error'] ? WP_CONTENT_DIR . '/uploads/fonts' : $upload_dir['basedir'] . '/fonts';
+		$folder_url = $upload_dir['error'] ? WP_CONTENT_URL . '/uploads/fonts' : $upload_dir['baseurl'] . '/fonts';
 
 		$stylesheet     = $folder . '/' . $id . '/font.css';
 		$stylesheet_url = $folder_url . '/' . $id . '/font.css';
@@ -238,7 +215,8 @@ class LGF {
 
 
 	public function clear() {
-		$folder = WP_CONTENT_DIR . '/uploads/fonts';
+		$upload_dir = wp_get_upload_dir();
+		$folder     = $upload_dir['error'] ? WP_CONTENT_DIR . '/uploads/fonts' : $upload_dir['basedir'] . '/fonts';
 		if ( is_dir( $folder ) ) {
 			$WP_Filesystem = $this->wp_filesystem();
 			$WP_Filesystem->delete( $folder, true );
@@ -252,7 +230,8 @@ class LGF {
 	}
 
 	public function remove_set( $id = null ) {
-		$folder = WP_CONTENT_DIR . '/uploads/fonts';
+		$upload_dir = wp_get_upload_dir();
+		$folder     = $upload_dir['error'] ? WP_CONTENT_DIR . '/uploads/fonts' : $upload_dir['basedir'] . '/fonts';
 		if ( ! is_null( $id ) ) {
 			$folder .= '/' . basename( $id );
 		}
