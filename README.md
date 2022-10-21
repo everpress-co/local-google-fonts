@@ -4,11 +4,9 @@ Contributors: everpress, xaverb
 Tags: googlefonts, google, fonts, gdpr, lgf, font, speed  
 Requires at least: 4.6  
 Tested up to: 6.0  
-Stable tag: 0.15  
+Stable tag: 0.18  
 Requires PHP: 5.6+  
 License: GPLv2 or later  
-Author: EverPress  
-Author URI: https://everpress.co  
 Donate link: https://evp.to/donate
 
 ## Description
@@ -78,11 +76,36 @@ The plugin currently only checks fonts embedded via [`wp_enqueue_style`](https:/
 
 The Divi theme has a custom implementation of Google Fonts. To use LGF with Divi disable _Improve Google Fonts Loading_ on the Performance Settings page of Divi.
 
+### How to host Fonts loaded with Slider Revolution?
+
+Slider Revolution uses it's own way to load Google Fonts and LGF cannot handle them. Slider Revolution has a built in feature for their sliders.
+
+1. Goto Slider Revolution
+2. Click on "Global" in the top navigation
+3. Find the "Fonts" section and Choose "Cache Fonts Local" on "Enable Google Fonts download"
+4. Save your settings.
+
 ### Why are some characters displayed in the fallback font?
 
 You may have loaded a subset which doesn't included required characters. Check additional subsets on the settings page and reload your font.
 
 ## Changelog
+
+### 0.18
+
+-   do not use `remove_query_arg` to strip args as it can break some URLs
+
+### 0.17
+
+-   remove `ver` query argument from URLs as they are added by WordPress. _Please review settings as fonts may have to be reloaded_
+-   introduced upgrade class for future updates
+-   added: welcome message after plugin activation
+-   added Codeable banner
+-   fixed: PHP warning on missing key
+
+### 0.16
+
+-   using absolute path to support Google Fonts in [Mailster](https://mailster.co/?utm_campaign=wporg&utm_source=wordpress.org&utm_medium=readme&utm_term=Local+Google+Fonts).
 
 ### 0.15
 

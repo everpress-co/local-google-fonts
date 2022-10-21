@@ -6,11 +6,11 @@ class LGF {
 
 	private static $instance = null;
 
-	private $seed = AUTH_SALT;
 	private $upload_dir;
 
 	private function __construct() {
 
+		register_activation_hook( LGF_PLUGIN_FILE, array( $this, 'activate' ) );
 		register_deactivation_hook( LGF_PLUGIN_FILE, array( $this, 'deactivate' ) );
 
 		add_filter( 'style_loader_src', array( $this, 'switch_stylesheet_src' ), 10, 2 );
@@ -19,6 +19,8 @@ class LGF {
 
 		add_filter( 'local_google_fonts_replace_in_content', array( $this, 'replace_in_content' ) );
 		add_filter( 'local_google_fonts_replace_url', array( $this, 'google_to_local_url' ), 10, 2 );
+
+		add_action( 'admin_notices', array( $this, 'maybe_welcome_message' ) );
 
 	}
 
@@ -36,7 +38,10 @@ class LGF {
 			$urls = array_diff( $urls, array( 'fonts.googleapis.com' ) );
 		} elseif ( 'preconnect' === $relation_type ) {
 			foreach ( $urls as $key => $url ) {
-				if ( false !== strpos( $url['href'], '//fonts.gstatic.com' ) ) {
+				if ( ! isset( $url['href'] ) ) {
+					continue;
+				}
+				if ( preg_match( '/\/\/fonts\.(gstatic|googleapis)\.com/', $url['href'] ) ) {
 					unset( $urls[ $key ] );
 				}
 			}
@@ -47,6 +52,9 @@ class LGF {
 
 
 	public function process_url( $src, $handle ) {
+
+		// remove 'ver' query arg as it is added by WP
+		$src = preg_replace('/&ver=([^&]+)/', '', $src);
 
 		$id = md5( $src );
 
@@ -122,21 +130,21 @@ class LGF {
 					$style .= "\tfont-display: " . $args['display'] . ";\n";
 				}
 
-				$style .= "\tsrc: url('" . $file . ".eot?v=$time');\n";
+				$style .= "\tsrc: url('" . $folder_url . '/' . $id . '/' . $file . ".eot?v=$time');\n";
 				$style .= "\tsrc: local(''),\n";
-				$style .= "\t\turl('" . $file . ".eot?v=$time#iefix') format('embedded-opentype'),\n";
+				$style .= "\t\turl('" . $folder_url . '/' . $id . '/' . $file . ".eot?v=$time#iefix') format('embedded-opentype'),\n";
 
 				if ( $v->woff2 ) {
-					$style .= "\t\turl('" . $file . ".woff2?v=$time') format('woff2'),\n";
+					$style .= "\t\turl('" . $folder_url . '/' . $id . '/' . $file . ".woff2?v=$time') format('woff2'),\n";
 				}
 				if ( $v->woff ) {
-					$style .= "\t\turl('" . $file . ".woff?v=$time') format('woff'),\n";
+					$style .= "\t\turl('" . $folder_url . '/' . $id . '/' . $file . ".woff?v=$time') format('woff'),\n";
 				}
 				if ( $v->ttf ) {
-					$style .= "\t\turl('" . $file . ".ttf?v=$time') format('truetype'),\n";
+					$style .= "\t\turl('" . $folder_url . '/' . $id . '/' . $file . ".ttf?v=$time') format('truetype'),\n";
 				}
 				if ( $v->svg ) {
-					$style .= "\t\turl('" . $file . ".svg?v=$time" . strrchr( $v->svg, '#' ) . "') format('svg');\n";
+					$style .= "\t\turl('" . $folder_url . '/' . $id . '/' . $file . ".svg?v=$time" . strrchr( $v->svg, '#' ) . "') format('svg');\n";
 				}
 				$style .= "}\n\n";
 
@@ -172,6 +180,11 @@ class LGF {
 
 	public function google_to_local_url( $src, $handle = null ) {
 
+		$org = $src;
+
+		// remove 'ver' query arg as it is added by WP
+		$src = preg_replace('/&ver=([^&]+)/', '', $src);
+
 		$id = md5( $src );
 
 		$folder     = WP_CONTENT_DIR . '/uploads/fonts';
@@ -186,7 +199,7 @@ class LGF {
 
 			// do not load on customizer preview.
 			if ( is_customize_preview() ) {
-				return $src;
+				return $org;
 			}
 
 			if ( is_null( $handle ) ) {
@@ -205,6 +218,8 @@ class LGF {
 			$options = get_option( 'local_google_fonts' );
 			if ( isset( $options['auto_load'] ) ) {
 				$src = $this->process_url( $src, $handle );
+			} else {
+				$src = $org;
 			}
 		}
 
@@ -247,6 +262,18 @@ class LGF {
 		return true;
 	}
 
+	public function maybe_welcome_message() {
+
+		if ( get_option( 'local_google_fonts_buffer' ) || get_option( 'local_google_fonts' ) ) {
+			return;
+		}
+		?>
+	<div class="notice notice-info">
+		<p><?php printf( esc_html__( 'Thanks for using Local Google Fonts. Please check the %s.', 'local-google-fonts' ), '<a href="' . admin_url( 'options-general.php?page=lgf-settings' ) . '">' . esc_html__( 'settings page', 'local-google-fonts' ) . '</a>' ); ?></p>
+	</div>
+		<?php
+	}
+
 	private function wp_filesystem() {
 		global $wp_filesystem;
 
@@ -259,6 +286,9 @@ class LGF {
 		return $wp_filesystem;
 
 	}
+
+	public function activate() {}
+
 
 	public function deactivate() {
 		$this->clear();
