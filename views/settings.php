@@ -103,7 +103,7 @@ if ( ! $count ) :
 			</tbody>
 		</table>
 		<p>
-				<?php if ( is_dir( $folder . '/' . $data['id'] ) ) : ?>
+			<?php if ( is_dir( $folder . '/' . $data['id'] ) ) : ?>
 			<button class="host-locally button button-primary" name="hostlocal" value="<?php echo esc_attr( $data['handle'] ); ?>"><?php esc_html_e( 'Reload Fonts', 'local-google-fonts' ); ?></button>
 			<button class="host-locally button button-link-delete" name="removelocal" value="<?php echo esc_attr( $data['handle'] ); ?>"><?php esc_html_e( 'Remove hosted files', 'local-google-fonts' ); ?></button>
 			<?php else : ?>

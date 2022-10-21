@@ -22,6 +22,8 @@ class LGF {
 
 		add_action( 'admin_notices', array( $this, 'maybe_welcome_message' ) );
 
+		add_filter( 'plugin_action_links', array( &$this, 'add_action_link' ), 10, 2 );
+
 	}
 
 	public static function get_instance() {
@@ -99,7 +101,7 @@ class LGF {
 		$class  = LGF_Admin::get_instance();
 		$parser = $class->get_parser( $src );
 
-		$info      = $parser->get_info();
+		$info       = $parser->get_info();
 		$stylesheet = $parser->get_remote_styles();
 
 		if ( is_wp_error( $parser ) ) {
@@ -117,7 +119,7 @@ class LGF {
 					}
 					if ( $WP_Filesystem->copy( $tmp_file, $face['file'] ) ) {
 						$WP_Filesystem->delete( $tmp_file );
-						$local_file = add_query_arg('c', time(), $face['local_url']);
+						$local_file = add_query_arg( 'c', time(), $face['local_url'] );
 						$stylesheet = str_replace( $face['remote_url'], $local_file, $stylesheet );
 					}
 				} else {
@@ -252,6 +254,15 @@ class LGF {
 		<p><?php printf( esc_html__( 'Thanks for using Local Google Fonts. Please check the %s.', 'local-google-fonts' ), '<a href="' . admin_url( 'options-general.php?page=lgf-settings' ) . '">' . esc_html__( 'settings page', 'local-google-fonts' ) . '</a>' ); ?></p>
 	</div>
 		<?php
+	}
+
+	public function add_action_link( $links, $file ) {
+
+		if ( $file == 'local-google-fonts/local-google-fonts.php' ) {
+			array_unshift( $links, '<a href="' . admin_url( 'options-general.php?page=lgf-settings' ) . '">' . esc_html__( 'Settings', 'local-google-fonts' ) . '</a>' );
+		}
+
+		return $links;
 	}
 
 	private function wp_filesystem() {
