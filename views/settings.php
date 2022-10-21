@@ -1,10 +1,10 @@
 <?php
 
-
 $buffer = get_option( 'local_google_fonts_buffer', array() );
 
-$folder     = WP_CONTENT_DIR . '/uploads/fonts';
-$folder_url = WP_CONTENT_URL . '/uploads/fonts';
+$upload_dir = wp_get_upload_dir();
+$folder     = $upload_dir['error'] ? WP_CONTENT_DIR . '/uploads/fonts' : $upload_dir['basedir'] . '/fonts';
+$folder_url = $upload_dir['error'] ? WP_CONTENT_URL . '/uploads/fonts' : $upload_dir['baseurl'] . '/fonts';
 $count      = count( $buffer );
 
 if ( ! $count ) :
@@ -24,7 +24,7 @@ if ( ! $count ) :
 
 		?>
 		<?php submit_button(); ?>
-		
+
 	<hr>
 	<h2><?php printf( esc_html__( _n( '%d Google font source found on your site.', '%d Google font sources found on your site.', $count, 'local-google-fonts' ) ), $count ); ?></h2>
 
@@ -64,13 +64,13 @@ if ( ! $count ) :
 					<td>
 						<p class="code">
 						<?php foreach ( $font->variants as $variant ) : ?>
-								<span class="variant"><?php printf( '%s %s', $variant->fontStyle, $variant->fontWeight ); ?></span> 
+								<span class="variant"><?php printf( '%s %s', $variant->fontStyle, $variant->fontWeight ); ?></span>
 						<?php endforeach ?>
 						</p>
 						<?php $active_subsets = isset( $data['subsets'] ) ? $data['subsets'][ $font->id ] : array_keys( array_filter( (array) $font->subsetMap ) ); ?>
 						<p><strong><?php esc_html_e( 'Subsets', 'local-google-fonts' ); ?></strong><br>
 						<?php foreach ( $font->subsetMap as $subset => $is_active ) : ?>
-							<label title="<?php printf( esc_attr__( 'Load %s subset with this font', 'local-google-fonts' ), $subset ); ?>" class="subset"><input type="checkbox" name="subsets[<?php echo esc_attr( $data['handle'] ); ?>][<?php echo esc_attr( $font->id ); ?>][]" value="<?php echo esc_attr( $subset ); ?>" <?php checked( in_array( $subset, $active_subsets ) ); ?>> <?php echo esc_html( $subset ); ?> </label> 
+							<label title="<?php printf( esc_attr__( 'Load %s subset with this font', 'local-google-fonts' ), $subset ); ?>" class="subset"><input type="checkbox" name="subsets[<?php echo esc_attr( $data['handle'] ); ?>][<?php echo esc_attr( $font->id ); ?>][]" value="<?php echo esc_attr( $subset ); ?>" <?php checked( in_array( $subset, $active_subsets ) ); ?>> <?php echo esc_html( $subset ); ?> </label>
 						<?php endforeach ?>
 						</p>
 						<details>
@@ -89,8 +89,8 @@ if ( ! $count ) :
 									<?php else : ?>
 										<code><?php esc_html_e( 'Local', 'local-google-fonts' ); ?>: <?php echo esc_html( basename( $file ) ); ?></code>
 										<strong class="wp-ui-text-notification" title="<?php esc_attr_e( 'not loaded, served from Google servers', 'local-google-fonts' ); ?>">✕</strong>
-									<?php endif; ?>	
-									</li>								
+									<?php endif; ?>
+									</li>
 									<li><code><?php esc_html_e( 'Remote', 'local-google-fonts' ); ?>: <?php echo esc_url( $variant->{$ext} ); ?></code></li>
 									</ul>
 								<?php endforeach; ?>
@@ -105,13 +105,13 @@ if ( ! $count ) :
 						<?php else : ?>
 							<?php printf( '%s %s', '<strong class="wp-ui-text-notification">✕</strong>', esc_html__( 'not loaded, served from Google servers', 'local-google-fonts' ) ); ?>
 						<?php endif; ?>
-					
+
 					</td>
 
 				</tr>
 			<?php endforeach ?>
 			</tbody>
-		</table>		
+		</table>
 		<p>
 				<?php if ( is_dir( $folder . '/' . $data['id'] ) ) : ?>
 			<button class="host-locally button button-primary" name="hostlocal" value="<?php echo esc_attr( $data['handle'] ); ?>"><?php esc_html_e( 'Reload Fonts', 'local-google-fonts' ); ?></button>
@@ -126,8 +126,8 @@ if ( ! $count ) :
 	<hr>
 		<p class="textright">
 			<button class="host-locally button button-link-delete" name="flush" value="1"><?php esc_html_e( 'Remove all stored data', 'local-google-fonts' ); ?></button>
-		</p>			
-	<?php submit_button(); ?>							
+		</p>
+	<?php submit_button(); ?>
 
 		</form>
 	</section>
