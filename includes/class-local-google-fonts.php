@@ -6,7 +6,6 @@ class LGF {
 
 	private static $instance = null;
 
-	private $seed = AUTH_SALT;
 	private $upload_dir;
 
 	private function __construct() {
