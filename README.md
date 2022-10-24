@@ -23,7 +23,7 @@ more on [wptavern.com](https://wptavern.com/german-court-fines-website-owner-for
 
 ![Option Interface.](.wordpress-org/screenshot-1.png)
 
-### 2. Access dev tools in your browser
+### 2. Access development tools in your browser
 
 ![Dev tools](.wordpress-org/screenshot-2.png)
 
