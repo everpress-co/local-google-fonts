@@ -117,12 +117,10 @@ class LGF {
 					if ( ! is_dir( dirname( $face['file'] ) ) ) {
 						wp_mkdir_p( dirname( $face['file'] ) );
 					}
-					if ( $WP_Filesystem->copy( $tmp_file, $face['file'] ) ) {
-						$WP_Filesystem->delete( $tmp_file );
-						$local_file = add_query_arg( 'c', time(), $face['local_url'] );
-						$stylesheet = str_replace( $face['remote_url'], $local_file, $stylesheet );
-					}
-				} else {
+					$WP_Filesystem->copy( $tmp_file, $face['file'] );
+					$WP_Filesystem->delete( $tmp_file );
+					$local_file = add_query_arg( 'c', time(), $face['local_url'] );
+					$stylesheet = str_replace( $face['remote_url'], $local_file, $stylesheet );
 
 				}
 			}
@@ -247,6 +245,9 @@ class LGF {
 	public function maybe_welcome_message() {
 
 		if ( get_option( 'local_google_fonts_buffer' ) || get_option( 'local_google_fonts' ) ) {
+			return;
+		}
+		if ( get_current_screen()->id == 'settings_page_lgf-settings' ) {
 			return;
 		}
 		?>
