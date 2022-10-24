@@ -76,6 +76,10 @@ The plugin currently only checks fonts embedded via [`wp_enqueue_style`](https:/
 
 The Divi theme has a custom implementation of Google Fonts. To use LGF with Divi disable _Improve Google Fonts Loading_ on the Performance Settings page of Divi.
 
+### Why only the woff2 font format is loaded?
+
+Woff2 is the successor of the woff format and and offers a 30% average compression gain over the original format. It is also supported by over 96% of browsers ([source](https://caniuse.com/woff2)).
+
 ### How to host Fonts loaded with Slider Revolution?
 
 Slider Revolution uses it's own way to load Google Fonts and LGF cannot handle them. Slider Revolution has a built in feature for their sliders.
