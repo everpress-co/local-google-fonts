@@ -4,11 +4,15 @@ jQuery(document).ready(function ($) {
 	$('.host-locally').on('click', function () {
 		$(this).addClass('updating-message');
 	});
+	$('.check').on('click', function () {
+		$(this).addClass('updating-message');
+		$.get(location.origin, function (response) {
+			location.reload();
+		});
+		return false;
+	});
 
 	$('.get-support').on('click', function () {
-		var url = new URL(
-			'https://app.codeable.io/affiliate-form/affiliate-form.html'
-		);
 		var args = new URLSearchParams();
 
 		args.set('origin', location.origin);
