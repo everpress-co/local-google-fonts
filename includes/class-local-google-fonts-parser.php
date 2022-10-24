@@ -170,8 +170,6 @@ class LGF_Parser {
 			$this->styles        .= $styles;
 		}
 
-		error_log( print_r( $result, true ) );
-
 		$this->info = $result;
 
 	}
