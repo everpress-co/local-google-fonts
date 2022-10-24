@@ -22,14 +22,16 @@ if ( ! $count ) :
 		settings_fields( 'local_google_fonts_settings_page' );
 		do_settings_sections( 'local_google_fonts_settings_page' );
 
+		if ( $count ) :
+			submit_button();
+		endif;
 		?>
-		<?php submit_button(); ?>
-
+					
 	<hr>
 	<h2><?php printf( esc_html__( _n( '%d Google font source found on your site.', '%d Google font sources found on your site.', $count, 'local-google-fonts' ) ), $count ); ?></h2>
 
 	<p><?php esc_html_e( 'This page shows all discovered Google Fonts over time. If you miss a font start browsing your front end so they end up showing here.', 'local-google-fonts' ); ?></p>
-
+	
 		<?php foreach ( $buffer as $id => $data ) : ?>
 
 	<h3><?php esc_html_e( 'Handle', 'local-google-fonts' ); ?>: <code><?php esc_html_e( $data['handle'] ); ?></code></h3>
@@ -67,7 +69,7 @@ if ( ! $count ) :
 							<div style="max-height: 280px; overflow: scroll;font-size: small;white-space: nowrap; overflow: hidden; overflow-y: auto;" class="code">
 							<?php foreach ( $font['faces'] as $face ) : ?>
 								<div>
-								<h4><?php printf( '%s %s', $face['style'], $face['weight'] ); ?></h4>
+								<strong><?php printf( '%s %s', $face['style'], $face['weight'] ); ?></strong>
 									<ul>
 									<li>
 									<?php if ( $face['loaded'] ) : ?>
@@ -87,11 +89,11 @@ if ( ! $count ) :
 					</td>
 					<td>
 						<?php if ( $font['loaded'] == $font['total'] ) : ?>
-							<?php printf( '%s %s', '<strong>✔</strong>', esc_html__( 'loaded, served from your server', 'local-google-fonts' ) ); ?>
+							<?php printf( '%s %s', '<strong>✔</strong>', sprintf( esc_html__( 'loaded from %s', 'local-google-fonts' ), '<code>' . wp_parse_url( $font['stylesheet'], PHP_URL_HOST ) . '</code>' ) ); ?>
 						<?php elseif ( $font['loaded'] > 0 ) : ?>
-							<?php printf( '%s %s', '<strong class="wp-ui-text-notification">✕</strong>', esc_html__( 'partially loaded, some files are loaded from Google servers.', 'local-google-fonts' ) ); ?>
+							<?php printf( '%s %s', '<strong class="wp-ui-text-notification">✕</strong>', sprintf( esc_html__( 'partially loaded, some files are loaded from %s', 'local-google-fonts' ), '<code>' . wp_parse_url( $data['src'], PHP_URL_HOST ) . '</code>' ) ); ?>
 						<?php else : ?>
-							<?php printf( '%s %s', '<strong class="wp-ui-text-notification">✕</strong>', esc_html__( 'not loaded, served from Google servers', 'local-google-fonts' ) ); ?>
+							<?php printf( '%s %s', '<strong class="wp-ui-text-notification">✕</strong>', sprintf( esc_html__( 'loaded from %s', 'local-google-fonts' ), '<code>' . wp_parse_url( $data['src'], PHP_URL_HOST ) . '</code>' ) ); ?>
 						<?php endif; ?>
 						<?php if ( $font['filesize'] ) : ?>
 							<p><?php esc_html_e( size_format( $font['filesize'] ) ); ?></p>
@@ -103,7 +105,7 @@ if ( ! $count ) :
 			</tbody>
 		</table>
 		<p>
-				<?php if ( is_dir( $folder . '/' . $data['id'] ) ) : ?>
+			<?php if ( is_dir( $folder . '/' . $data['id'] ) ) : ?>
 			<button class="host-locally button button-primary" name="hostlocal" value="<?php echo esc_attr( $data['handle'] ); ?>"><?php esc_html_e( 'Reload Fonts', 'local-google-fonts' ); ?></button>
 			<button class="host-locally button button-link-delete" name="removelocal" value="<?php echo esc_attr( $data['handle'] ); ?>"><?php esc_html_e( 'Remove hosted files', 'local-google-fonts' ); ?></button>
 			<?php else : ?>
@@ -116,6 +118,7 @@ if ( ! $count ) :
 	<?php endforeach ?>
 	<hr>
 		<p class="textright">
+			<button class="check button button-secondary" name="check"><?php esc_html_e( 'Manually check Homepage', 'local-google-fonts' ); ?></button>
 			<button class="host-locally button button-link-delete" name="flush" value="1"><?php esc_html_e( 'Remove all stored data', 'local-google-fonts' ); ?></button>
 		</p>
 	<?php submit_button(); ?>
