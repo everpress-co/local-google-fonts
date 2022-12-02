@@ -171,9 +171,7 @@ class LGF {
 		$stylesheet     = $folder . '/' . $id . '/font.css';
 		$stylesheet_url = $folder_url . '/' . $id . '/font.css';
 
-		if ( file_exists( $stylesheet ) ) {
-			$src = add_query_arg( 'v', filemtime( $stylesheet ), $stylesheet_url );
-		} else {
+		if ( ! file_exists( $stylesheet ) ) {
 
 			// do not load on customizer preview.
 			if ( is_customize_preview() ) {
@@ -194,12 +192,15 @@ class LGF {
 			update_option( 'local_google_fonts_buffer', $buffer );
 
 			$options = get_option( 'local_google_fonts' );
-			if ( isset( $options['auto_load'] ) ) {
-				$src = $this->process_url( $src, $handle );
-			} else {
-				$src = $org;
+			if ( ! isset( $options['auto_load'] ) ) {
+				return $org;
 			}
+
+			$src = $this->process_url( $src, $handle );
+
 		}
+
+		$src = add_query_arg( 'v', filemtime( $stylesheet ), $stylesheet_url );
 
 		return $src;
 	}
