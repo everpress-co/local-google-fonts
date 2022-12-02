@@ -74,7 +74,7 @@ The plugin currently only checks fonts embedded via [`wp_enqueue_style`](https:/
 
 ### The Divi theme still loads a Google font?
 
-The Divi theme has a custom implementation of Google Fonts. To use LGF with Divi disable _Improve Google Fonts Loading_ on the Performance Settings page of Divi.
+The DIVI theme has a custom implementation of Google Fonts. To use LGF with DIVI disable _Improve Google Fonts Loading_ on the Performance Settings page of DIVI.
 
 ### Why only the woff2 font format is loaded?
 
