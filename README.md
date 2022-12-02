@@ -3,8 +3,8 @@
 Contributors: everpress, xaverb  
 Tags: googlefonts, google, fonts, gdpr, lgf, font, speed  
 Requires at least: 4.6  
-Tested up to: 6.0  
-Stable tag: 0.19  
+Tested up to: 6.1  
+Stable tag: 0.20.0  
 Requires PHP: 5.6+  
 License: GPLv2 or later  
 Donate link: https://evp.to/donate
@@ -23,7 +23,7 @@ more on [wptavern.com](https://wptavern.com/german-court-fines-website-owner-for
 
 ![Option Interface.](.wordpress-org/screenshot-1.png)
 
-### 2. Access dev tools in your browser
+### 2. Access development tools in your browser
 
 ![Dev tools](.wordpress-org/screenshot-2.png)
 
@@ -94,6 +94,12 @@ Slider Revolution uses it's own way to load Google Fonts and LGF cannot handle t
 You may have loaded a subset which doesn't included required characters. Check additional subsets on the settings page and reload your font.
 
 ## Changelog
+
+### 0.20.0
+
+-   make sure files are loaded via https if requested
+-   new filter `lgf_folder_url`and `lgf_folder`
+-   always append timestamp to prevent caching
 
 ### 0.19
 

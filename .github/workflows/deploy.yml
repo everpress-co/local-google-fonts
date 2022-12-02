@@ -11,7 +11,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@master
       - name: WordPress Plugin Deploy
-        uses: everpress-co/action-wordpress-plugin-deploy@develop
+        uses: everpress-co/action-wordpress-plugin-deploy@main
         with:
           generate-zip: true
         env:
