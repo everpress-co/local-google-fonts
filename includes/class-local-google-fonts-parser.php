@@ -28,9 +28,8 @@ class LGF_Parser {
 		$result              = array();
 		$this->remote_styles = '';
 		$this->styles        = '';
-		$upload_dir          = wp_get_upload_dir();
-		$folder              = $upload_dir['error'] ? WP_CONTENT_DIR . '/uploads/fonts' : $upload_dir['basedir'] . '/fonts';
-		$folder_url          = $upload_dir['error'] ? WP_CONTENT_URL . '/uploads/fonts' : $upload_dir['baseurl'] . '/fonts';
+		$folder              = LGF::get_folder();
+		$folder_url          = LGF::get_folder_url();
 
 		foreach ( $this->format as $format ) {
 			$remote_styles = $this->get_remote_styleheet( $format );

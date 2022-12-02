@@ -6,8 +6,6 @@ class LGF {
 
 	private static $instance = null;
 
-	private $upload_dir;
-
 	private function __construct() {
 
 		register_activation_hook( LGF_PLUGIN_FILE, array( $this, 'activate' ) );
@@ -32,6 +30,25 @@ class LGF {
 		}
 
 		return self::$instance;
+	}
+
+	public static function get_folder() {
+		$upload_dir = wp_get_upload_dir();
+		$folder     = $upload_dir['error'] ? WP_CONTENT_DIR . '/uploads/fonts' : $upload_dir['basedir'] . '/fonts';
+
+		return apply_filters( 'lgf_folder', $folder );
+	}
+
+	public static function get_folder_url() {
+		$upload_dir = wp_get_upload_dir();
+		$folder_url = $upload_dir['error'] ? WP_CONTENT_URL . '/uploads/fonts' : $upload_dir['baseurl'] . '/fonts';
+
+		// make sure it's served over https
+		if ( is_ssl() ) {
+			$folder_url = set_url_scheme( $folder_url, 'https' );
+		}
+
+		return apply_filters( 'lgf_folder_url', $folder_url );
 	}
 
 	public static function remove_dns_prefetch( $urls, $relation_type ) {
@@ -91,9 +108,8 @@ class LGF {
 			)
 		);
 
-		$upload_dir = wp_get_upload_dir();
-		$folder     = $upload_dir['error'] ? WP_CONTENT_DIR . '/uploads/fonts' : $upload_dir['basedir'] . '/fonts';
-		$folder_url = $upload_dir['error'] ? WP_CONTENT_URL . '/uploads/fonts' : $upload_dir['baseurl'] . '/fonts';
+		$folder     = self::get_folder();
+		$folder_url = self::get_folder_url();
 
 		$new_src = $folder_url . '/' . $id . '/font.css';
 		$new_dir = $folder . '/' . $id . '/font.css';
@@ -164,9 +180,8 @@ class LGF {
 
 		$id = md5( $src );
 
-		$upload_dir = wp_get_upload_dir();
-		$folder     = $upload_dir['error'] ? WP_CONTENT_DIR . '/uploads/fonts' : $upload_dir['basedir'] . '/fonts';
-		$folder_url = $upload_dir['error'] ? WP_CONTENT_URL . '/uploads/fonts' : $upload_dir['baseurl'] . '/fonts';
+		$folder     = self::get_folder();
+		$folder_url = self::get_folder_url();
 
 		$stylesheet     = $folder . '/' . $id . '/font.css';
 		$stylesheet_url = $folder_url . '/' . $id . '/font.css';
@@ -216,8 +231,7 @@ class LGF {
 
 
 	public function clear() {
-		$upload_dir = wp_get_upload_dir();
-		$folder     = $upload_dir['error'] ? WP_CONTENT_DIR . '/uploads/fonts' : $upload_dir['basedir'] . '/fonts';
+		$folder = self::get_folder();
 		if ( is_dir( $folder ) ) {
 			$WP_Filesystem = $this->wp_filesystem();
 			$WP_Filesystem->delete( $folder, true );
@@ -231,8 +245,7 @@ class LGF {
 	}
 
 	public function remove_set( $id = null ) {
-		$upload_dir = wp_get_upload_dir();
-		$folder     = $upload_dir['error'] ? WP_CONTENT_DIR . '/uploads/fonts' : $upload_dir['basedir'] . '/fonts';
+		$folder = self::get_folder();
 		if ( ! is_null( $id ) ) {
 			$folder .= '/' . basename( $id );
 		}
