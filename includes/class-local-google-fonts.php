@@ -5,6 +5,7 @@ namespace EverPress;
 class LGF {
 
 	private static $instance = null;
+	private $user_agent      = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36';
 
 	private function __construct() {
 
@@ -128,13 +129,16 @@ class LGF {
 
 			foreach ( $font['faces'] as $face ) {
 
-				$tmp_file = download_url( $face['remote_url'] );
+				$response = wp_remote_get( $face['remote_url'], array( 'user-agent' => $user_agent ) );
+
 				if ( ! is_wp_error( $tmp_file ) ) {
 					if ( ! is_dir( dirname( $face['file'] ) ) ) {
 						wp_mkdir_p( dirname( $face['file'] ) );
 					}
-					$WP_Filesystem->copy( $tmp_file, $face['file'] );
-					$WP_Filesystem->delete( $tmp_file );
+					$data = wp_remote_retrieve_body( $response );
+
+					$WP_Filesystem->put_contents( $face['file'], $data );
+
 					$local_file = add_query_arg( 'c', time(), $face['local_url'] );
 					$stylesheet = str_replace( $face['remote_url'], $local_file, $stylesheet );
 
