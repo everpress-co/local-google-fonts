@@ -88,8 +88,6 @@ class LGF {
 			include ABSPATH . 'wp-admin/includes/plugin.php';
 		}
 
-		$time = time();
-
 		$plugin_data = get_plugin_data( LGF_PLUGIN_FILE );
 
 		$style  = "/*\n";
@@ -129,9 +127,9 @@ class LGF {
 
 			foreach ( $font['faces'] as $face ) {
 
-				$response = wp_remote_get( $face['remote_url'], array( 'user-agent' => $user_agent ) );
+				$response = wp_remote_get( $face['remote_url'], array( 'user-agent' => $this->user_agent ) );
 
-				if ( ! is_wp_error( $tmp_file ) ) {
+				if ( ! is_wp_error( $response ) ) {
 					if ( ! is_dir( dirname( $face['file'] ) ) ) {
 						wp_mkdir_p( dirname( $face['file'] ) );
 					}
