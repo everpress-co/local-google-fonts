@@ -114,6 +114,14 @@ class LGF_Admin {
 		<p class="description">
 			<?php esc_html_e( 'If you check this option discovered fonts will get loaded automatically.', 'local-google-fonts' ); ?>
 		</p>
+		<p>
+			<label><input type="checkbox" value="1" name="local_google_fonts[always_regenerate]" <?php checked( isset( $options['always_regenerate'] ) ); ?>>
+				<?php esc_html_e( 'Always regenerate font files', 'local-google-fonts' ); ?>
+			</label>
+		</p>
+		<p class="description">
+			<?php esc_html_e( 'If you check this option, the font CSS will be regenerated at every request. This might be required if you point multiple domains to the same WordPress instance.', 'local-google-fonts' ); ?>
+		</p>
 		<?php
 	}
 
