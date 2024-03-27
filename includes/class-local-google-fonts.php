@@ -188,7 +188,9 @@ class LGF {
 		$stylesheet     = $folder . '/' . $id . '/font.css';
 		$stylesheet_url = $folder_url . '/' . $id . '/font.css';
 
-		if ( ! file_exists( $stylesheet ) ) {
+		$options = get_option( 'local_google_fonts' );
+
+		if ( isset( $options['always_regenerate'] ) || !file_exists( $stylesheet ) ) {
 
 			// do not load on customizer preview.
 			if ( is_customize_preview() ) {
@@ -208,7 +210,6 @@ class LGF {
 
 			update_option( 'local_google_fonts_buffer', $buffer );
 
-			$options = get_option( 'local_google_fonts' );
 			if ( ! isset( $options['auto_load'] ) ) {
 				return $org;
 			}
