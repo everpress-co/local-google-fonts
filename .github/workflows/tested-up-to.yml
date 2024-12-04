@@ -1,0 +1,31 @@
+---
+name: 'Update Tested Up To'
+on:
+  schedule:
+    - cron: '0 0 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  tested-up-to:
+    name: 'Update Tested Up To'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Update Tested up to version
+        uses: AlecRust/wp-tut-updater-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # Paths to update (optional, default: readme.txt)
+          file-paths: |
+            README.md
+          # Create a pull request, or commit directly if disabled (optional, default: true)
+          create-pr: true
