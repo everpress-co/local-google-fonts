@@ -1,0 +1,65 @@
+name: 🐛 Bug Report
+description: File a bug report
+title: 'BUG:'
+labels: ['bug']
+assignees:
+  - evrpress
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: A clear and concise description of what the bug is.
+      placeholder: Tell us what you see!
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Tell us which steps needed to reproduce the behavior.
+      placeholder: |
+        1. Go to '...'
+        2. Click on '....'
+        3. Scroll down to '....'
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What should have happened?
+      description: A clear and concise description of what you expected to happen.
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: If applicable and bug is related to this environment
+      placeholder: |
+        - OS: [e.g. iOS]
+        - Browser [e.g. chrome, safari]
+        - Version [e.g. 22]
+
+  - type: input
+    id: helpscout
+    attributes:
+      label: HelpScout Ticket
+      description: 'The link to the HelpScout Ticket'
+      placeholder: 'https://secure.helpscout.net/conversation/...'
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Acceptance Criteria
+      description: Please make sure you checked on following things.
+      options:
+        - label: There's no other issue opened which for this issue
+          required: true

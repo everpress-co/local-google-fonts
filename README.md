@@ -7,7 +7,7 @@ Tested up to: 6.3
 Stable tag: 0.22.0  
 Requires PHP: 5.6+  
 License: GPLv2 or later  
-Donate link: https://evp.to/donate
+Donate link: <https://evp.to/donate>
 
 ## Description
 
@@ -15,11 +15,11 @@ Host your used Google fonts on your server and make your site more GDPR complian
 
 About 50 mio[\*](https://trends.builtwith.com/websitelist/Google-Font-API) sites use Google Fonts and in January 2022 a German court has ruled that using Google Fonts is a violation of Europe’s GDPR (General Data Protection Regulation).
 
-more on [wptavern.com](https://wptavern.com/german-court-fines-website-owner-for-violating-the-gdpr-by-using-google-hosted-fonts)
+more on [wptavern.com](https://wptavern.com/german-court-fines-website-owner-for-violating-the-gdpr-by-using-google-hosted-fonts).
 
 ## Screenshots
 
-### 1. Option Interface.
+### 1. Option Interface
 
 ![Option Interface.](.wordpress-org/screenshot-1.png)
 
@@ -143,7 +143,7 @@ You may have loaded a subset which doesn't included required characters. Check a
 
 ### 0.14
 
-- added info if https://google-webfonts-helper.herokuapp.com/ is down
+- added info if <https://google-webfonts-helper.herokuapp.com/> is down
 
 ### 0.13
 
