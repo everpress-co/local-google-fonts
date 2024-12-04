@@ -7,7 +7,7 @@ Tested up to: 6.3
 Stable tag: 0.22.0  
 Requires PHP: 5.6+  
 License: GPLv2 or later  
-Donate link: https://evp.to/donate
+Donate link: <https://evp.to/donate>
 
 ## Description
 
@@ -19,7 +19,7 @@ more on [wptavern.com](https://wptavern.com/german-court-fines-website-owner-for
 
 ## Screenshots
 
-### 1. Option Interface.
+### 1. Option Interface
 
 ![Option Interface.](.wordpress-org/screenshot-1.png)
 
@@ -143,7 +143,7 @@ You may have loaded a subset which doesn't included required characters. Check a
 
 ### 0.14
 
-- added info if https://google-webfonts-helper.herokuapp.com/ is down
+- added info if <https://google-webfonts-helper.herokuapp.com/> is down
 
 ### 0.13
 

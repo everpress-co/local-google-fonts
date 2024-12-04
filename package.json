@@ -1,0 +1,30 @@
+{
+	"name": "local-google-fonts",
+	"version": "0.22.0",
+	"author": "Xaver",
+	"license": "GPL-2.0",
+	"private": true,
+	"scripts": {
+		"build": "wp-scripts build",
+		"format": "wp-scripts format",
+		"lint:css": "wp-scripts lint-style",
+		"lint:js": "wp-scripts lint-js",
+		"packages-update": "wp-scripts packages-update",
+		"plugin-zip": "wp-scripts plugin-zip",
+		"start": "wp-scripts start"
+	},
+	"files": [
+		"*.php",
+		"build",
+		"classes",
+		"languages",
+		"includes",
+		"src",
+		"vendor",
+		"views",
+		"assets"
+	],
+	"devDependencies": {
+		"@wordpress/scripts": "^30.6.0"
+	}
+}
