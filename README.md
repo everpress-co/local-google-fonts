@@ -97,6 +97,9 @@ You may have loaded a subset which doesn't included required characters. Check a
 
 ### 0.23.0
 
+- Update WordPress 'Tested up to' version to 6.7
+- Don't show admin message when plugin is network-activated
+
 ### 0.22.0
 
 - fixed: missing `$user_agent` variable
