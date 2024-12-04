@@ -62,9 +62,12 @@ class LGF_Admin {
 
 		$class = LGF::get_instance();
 
+		$nonce = isset( $_POST['local_google_fonts_nonce'] ) ? sanitize_key( wp_unslash( $_POST['local_google_fonts_nonce'] ) ) : '';
+
 		$buffer = get_option( 'local_google_fonts_buffer', array() );
-		if ( isset( $_POST['subsets'] ) ) {
-			foreach ( $_POST['subsets'] as $handle => $subsets ) {
+		if ( isset( $_POST['subsets'] ) && wp_verify_nonce( $nonce, 'local_google_fonts' ) ) {
+			$subsets = wp_unslash( $_POST['subsets'] );
+			foreach ( $subsets as $handle => $subsets ) {
 				if ( isset( $buffer[ $handle ] ) ) {
 					if ( ! isset( $buffer[ $handle ]['subsets'] ) ) {
 						$buffer[ $handle ]['subsets'] = array();
@@ -75,8 +78,8 @@ class LGF_Admin {
 		}
 		update_option( 'local_google_fonts_buffer', $buffer );
 
-		if ( isset( $_POST['hostlocal'] ) ) {
-			$handle = $_POST['hostlocal'];
+		if ( isset( $_POST['hostlocal'] ) && wp_verify_nonce( $nonce, 'local_google_fonts' ) ) {
+			$handle = sanitize_key( wp_unslash( $_POST['hostlocal'] ) );
 			if ( isset( $buffer[ $handle ] ) ) {
 				$class->remove_set( $buffer[ $handle ]['id'] );
 				$class->process_url( $buffer[ $handle ]['src'], $handle );
@@ -84,14 +87,14 @@ class LGF_Admin {
 			}
 		}
 
-		if ( isset( $_POST['removelocal'] ) ) {
-			$handle = $_POST['removelocal'];
+		if ( isset( $_POST['removelocal'] ) && wp_verify_nonce( $nonce, 'local_google_fonts' ) ) {
+			$handle = sanitize_key( wp_unslash( $_POST['removelocal'] ) );
 			if ( isset( $buffer[ $handle ] ) ) {
 				$class->remove_set( $buffer[ $handle ]['id'] );
 			}
 		}
 
-		if ( isset( $_POST['flush'] ) ) {
+		if ( isset( $_POST['flush'] ) && wp_verify_nonce( $nonce, 'local_google_fonts' ) ) {
 			$class->clear();
 		}
 
@@ -135,6 +138,7 @@ class LGF_Admin {
 	}
 
 	public function admin_footer_text( $default ) {
-		return sprintf( esc_html__( 'If you like %1$s please leave a %2$s&#9733;&#9733;&#9733;&#9733;&#9733;%3$s rating. Thanks in advance!', 'local-google-fonts' ), '<strong>Local Google Fonts</strong>', '<a href="https://wordpress.org/support/view/plugin-reviews/local-google-fonts?filter=5#new-post" target="_blank" rel="noopener noreferrer">', '</a>' );
+		/* Translators: %1$s: Plugin Name, %2$s: Rating URL */
+		return sprintf( esc_html__( 'If you like %1$s please leave a %2$s rating. Thanks in advance!', 'local-google-fonts' ), '<strong>Local Google Fonts</strong>', '<a href="https://wordpress.org/support/view/plugin-reviews/local-google-fonts?filter=5#new-post" target="_blank" rel="noopener noreferrer">&#9733;&#9733;&#9733;&#9733;&#9733;</a>' );
 	}
 }

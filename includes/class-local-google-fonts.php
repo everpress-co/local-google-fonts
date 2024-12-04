@@ -22,7 +22,6 @@ class LGF {
 		add_action( 'admin_notices', array( $this, 'maybe_welcome_message' ) );
 
 		add_filter( 'plugin_action_links', array( &$this, 'add_action_link' ), 10, 2 );
-
 	}
 
 	public static function get_instance() {
@@ -92,7 +91,7 @@ class LGF {
 
 		$style  = "/*\n";
 		$style .= ' * ' . sprintf( 'Font file created by %s %s', $plugin_data['Name'], $plugin_data['Version'] ) . "\n";
-		$style .= ' * Created: ' . date( 'r' ) . "\n";
+		$style .= ' * Created: ' . gmdate( 'r' ) . "\n";
 		$style .= ' * Handle: ' . esc_attr( $handle ) . "\n";
 		$style .= ' * Original URL: ' . esc_attr( $src ) . "\n";
 		$style .= "*/\n\n";
@@ -149,7 +148,6 @@ class LGF {
 		$WP_Filesystem->put_contents( $new_dir, $style );
 
 		return $new_src;
-
 	}
 
 
@@ -239,7 +237,6 @@ class LGF {
 			$WP_Filesystem->delete( $folder, true );
 		}
 		$this->clear_option();
-
 	}
 
 	public function clear_option() {
@@ -274,7 +271,8 @@ class LGF {
 		}
 		?>
 	<div class="notice notice-info">
-		<p><?php printf( esc_html__( 'Thanks for using Local Google Fonts. Please check the %s.', 'local-google-fonts' ), '<a href="' . admin_url( 'options-general.php?page=lgf-settings' ) . '">' . esc_html__( 'settings page', 'local-google-fonts' ) . '</a>' ); ?></p>
+		<?php /* Translators: %s: plugin name */ ?>
+		<p><?php printf( esc_html__( 'Thanks for using Local Google Fonts. Please check the %s.', 'local-google-fonts' ), '<a href="' . esc_url( admin_url( 'options-general.php?page=lgf-settings' ) ) . '">' . esc_html__( 'settings page', 'local-google-fonts' ) . '</a>' ); ?></p>
 	</div>
 		<?php
 	}
@@ -298,7 +296,6 @@ class LGF {
 		\WP_Filesystem();
 
 		return $wp_filesystem;
-
 	}
 
 	public function activate() {}
@@ -307,5 +304,4 @@ class LGF {
 	public function deactivate() {
 		$this->clear();
 	}
-
 }

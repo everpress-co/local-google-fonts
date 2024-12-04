@@ -1,7 +1,7 @@
 <?php
 
 /*
- Thanks to https://github.com/WPTT/webfont-loader for parsing help
+Thanks to https://github.com/WPTT/webfont-loader for parsing help
 */
 
 namespace EverPress;
@@ -20,7 +20,6 @@ class LGF_Parser {
 
 		$this->set_src( $src );
 		$this->set_format( $format );
-
 	}
 
 	public function parse() {
@@ -133,10 +132,10 @@ class LGF_Parser {
 
 					$loaded = file_exists( $filename );
 
-					$result[ $sanitized ]['total']++;
+					++$result[ $sanitized ]['total'];
 					$filesize = null;
 					if ( $loaded ) {
-						$result[ $sanitized ]['loaded']++;
+						++$result[ $sanitized ]['loaded'];
 						$loaded                            = filemtime( $filename );
 						$filesize                          = filesize( $filename );
 						$result[ $sanitized ]['filesize'] += $filesize;
@@ -160,8 +159,8 @@ class LGF_Parser {
 					);
 				}
 
-				 // faster array_unique
-				 $result[ $sanitized ]['variants'] = array_keys( array_flip( $result[ $sanitized ]['variants'] ) );
+				// faster array_unique
+				$result[ $sanitized ]['variants'] = array_keys( array_flip( $result[ $sanitized ]['variants'] ) );
 
 			}
 
@@ -170,25 +169,21 @@ class LGF_Parser {
 		}
 
 		$this->info = $result;
-
 	}
 
 	public function get_remote_styles() {
 
 		return $this->remote_styles;
-
 	}
 
 	public function get_styles() {
 
 		return $this->styles;
-
 	}
 
 	public function get_info() {
 
 		return $this->info;
-
 	}
 
 	public function set_src( $src ) {
@@ -203,19 +198,16 @@ class LGF_Parser {
 	public function get_src() {
 
 		return $this->src;
-
 	}
 
 	public function set_format( $format ) {
 
 		$this->format = (array) $format;
-
 	}
 
 	public function get_format() {
 
 		return $this->format;
-
 	}
 
 	private function get_absolute_path( $url ) {
@@ -239,7 +231,6 @@ class LGF_Parser {
 		}
 
 		return wp_remote_retrieve_body( $response );
-
 	}
 
 	private function get_remote( $url, $args = array() ) {
@@ -255,11 +246,11 @@ class LGF_Parser {
 			if ( 200 === $code ) {
 				set_transient( $transient_key, $response, DAY_IN_SECONDS );
 			} else {
+				/* Translators: %s: URL */
 				return new \WP_Error( 'service_not_available', sprintf( esc_html__( '%s seems to be down right now. Please try again later.', 'local-google-fonts' ), $this->src ) );
 			}
 		}
 		return $response;
-
 	}
 
 	private function get_user_agent_by_format( $format ) {
@@ -299,5 +290,4 @@ class LGF_Parser {
 
 		return null;
 	}
-
 }
