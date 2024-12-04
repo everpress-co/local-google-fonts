@@ -23,7 +23,6 @@ class LGF_Admin {
 
 		add_filter( 'admin_init', array( $this, 'register_settings' ) );
 		add_action( 'admin_menu', array( $this, 'settings_page' ) );
-
 	}
 
 	public static function get_instance() {
@@ -46,7 +45,6 @@ class LGF_Admin {
 	public function settings_page() {
 		$page = add_options_page( __( 'Google Fonts', 'local-google-fonts' ), __( 'Google Fonts', 'local-google-fonts' ), 'manage_options', 'lgf-settings', array( $this, 'render_settings' ) );
 		add_action( 'load-' . $page, array( &$this, 'script_styles' ) );
-
 	}
 
 	public function script_styles() {
@@ -58,7 +56,6 @@ class LGF_Admin {
 		wp_enqueue_style( 'local-google-fonts-admin', $url . '/admin.css', array( 'thickbox' ), filemtime( $path . '/admin.css' ) );
 
 		add_action( 'admin_footer_text', array( $this, 'admin_footer_text' ) );
-
 	}
 
 	public function local_google_fonts_validate( $options ) {
@@ -99,7 +96,6 @@ class LGF_Admin {
 		}
 
 		return $options;
-
 	}
 
 	public function settings( $args ) {
@@ -125,7 +121,6 @@ class LGF_Admin {
 		}
 
 		include_once dirname( LGF_PLUGIN_FILE ) . '/views/settings.php';
-
 	}
 
 
@@ -137,7 +132,6 @@ class LGF_Admin {
 		$parser->parse();
 
 		return $parser;
-
 	}
 
 	public function admin_footer_text( $default ) {
