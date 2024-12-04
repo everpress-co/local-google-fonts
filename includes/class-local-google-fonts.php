@@ -266,6 +266,12 @@ class LGF {
 		if ( get_current_screen()->id == 'settings_page_lgf-settings' ) {
 			return;
 		}
+		if ( ! function_exists( 'is_plugin_active_for_network' ) ) {
+			include ABSPATH . 'wp-admin/includes/plugin.php';
+		}
+		if ( strpos( LGF_PLUGIN_FILE, 'mu-plugins/' ) || is_plugin_active_for_network( plugin_basename( LGF_PLUGIN_FILE ) ) ) {
+			return;
+		}
 		?>
 	<div class="notice notice-info">
 		<p><?php printf( esc_html__( 'Thanks for using Local Google Fonts. Please check the %s.', 'local-google-fonts' ), '<a href="' . admin_url( 'options-general.php?page=lgf-settings' ) . '">' . esc_html__( 'settings page', 'local-google-fonts' ) . '</a>' ); ?></p>
