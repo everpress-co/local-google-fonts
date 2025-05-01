@@ -133,7 +133,7 @@ if ( ! $count ) :
 	</section>
 	<aside class="lgf-side">
 
-			<?php /* Translators: %s: Hostname */ ?>
+		<?php /* Translators: %s: Hostname */ ?>
 		<h3><?php printf( esc_attr__( 'Optimize %s', 'local-google-fonts' ), esc_url( wp_parse_url( get_option( 'home' ), PHP_URL_HOST ) ) ); ?></h3>
 		<?php /* Translators: %s: Link to Codeable */ ?>
 		<p><?php printf( esc_attr__( 'We partner with %s to provide a trusted resource for hiring top quality premium support to help you optimize your site.', 'local-google-fonts' ), '<a href="https://codeable.io/?ref=ebTBq" ref="noopener noreferrer" target="_blank">Codeable</a>' ); ?></p>

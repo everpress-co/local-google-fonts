@@ -113,6 +113,16 @@ class LGF_Admin {
 		<p class="description">
 			<?php esc_html_e( 'If you check this option discovered fonts will get loaded automatically.', 'local-google-fonts' ); ?>
 		</p>
+		<p>
+			<label><input type="checkbox" value="1" name="local_google_fonts[relative_urls]" <?php checked( isset( $options['relative_urls'] ) ); ?>>
+				<?php esc_html_e( 'Use relative URLs', 'local-google-fonts' ); ?>
+			</label>
+		</p>
+		<p class="description">
+		<?php esc_html_e( 'If you check this option URLS are refenced relative to the current URL. This is useful if you are using a CDN.', 'local-google-fonts' ); ?></p>
+		<p class="description">
+		<?php esc_html_e( 'You have to manually re-create the fonts if you change this option.', 'local-google-fonts' ); ?>
+		</p>
 		<?php
 	}
 

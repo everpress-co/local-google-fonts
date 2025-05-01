@@ -122,6 +122,13 @@ class LGF {
 			return $src;
 		}
 
+		$options = get_option( 'local_google_fonts' );
+		if ( isset( $options['relative_urls'] ) ) {
+			$relative_urls = true;
+		} else {
+			$relative_urls = false;
+		}
+
 		foreach ( $info as $font ) {
 
 			foreach ( $font['faces'] as $face ) {
@@ -136,7 +143,12 @@ class LGF {
 
 					$WP_Filesystem->put_contents( $face['file'], $data );
 
-					$local_file = add_query_arg( 'c', time(), $face['local_url'] );
+					$url = $face['local_url'];
+					if ( $relative_urls ) {
+						$url = $face['relative_url'];
+					}
+
+					$local_file = add_query_arg( 'c', time(), $url );
 					$stylesheet = str_replace( $face['remote_url'], $local_file, $stylesheet );
 
 				}

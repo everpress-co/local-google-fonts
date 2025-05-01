@@ -3,7 +3,7 @@
 Contributors: everpress, xaverb  
 Tags: googlefonts, google, fonts, gdpr, font  
 Requires at least: 4.6  
-Tested up to: 6.7  
+Tested up to: 6.8  
 Stable tag: 0.24.0  
 Requires PHP: 7.4  
 License: GPLv2 or later  
@@ -98,6 +98,8 @@ You may have loaded a subset which doesn't included required characters. Check a
 ## Changelog
 
 ### 0.24.0
+
+- added: option to use relative URLs
 
 ### 0.23.0
 

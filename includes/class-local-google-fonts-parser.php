@@ -142,20 +142,24 @@ class LGF_Parser {
 					}
 					$local_url = $folder_url . '/' . $this->id . '/' . basename( $filename );
 
+					// store relative url
+					$relative_url = str_replace( home_url(), '', $local_url );
+
 					$styles = str_replace( $remote_url, $local_url, $styles );
 
 					$result[ $sanitized ]['faces'][] = array(
-						'remote_url' => $remote_url,
-						'local_url'  => $local_url,
-						'file'       => $filename,
-						'filesize'   => $filesize,
-						'loaded'     => $loaded,
-						'version'    => $version,
-						'format'     => $format,
-						'style'      => $font_style,
-						'weight'     => $font_weight,
-						'range'      => $unicode_range,
-						'subset'     => $subset,
+						'remote_url'   => $remote_url,
+						'local_url'    => $local_url,
+						'relative_url' => $relative_url,
+						'file'         => $filename,
+						'filesize'     => $filesize,
+						'loaded'       => $loaded,
+						'version'      => $version,
+						'format'       => $format,
+						'style'        => $font_style,
+						'weight'       => $font_weight,
+						'range'        => $unicode_range,
+						'subset'       => $subset,
 					);
 				}
 
