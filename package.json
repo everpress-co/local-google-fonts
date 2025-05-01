@@ -1,9 +1,8 @@
 {
 	"name": "local-google-fonts",
-	"version": "0.23.0",
+	"version": "0.24.0",
 	"author": "Xaver",
 	"license": "GPL-2.0",
-	"private": true,
 	"scripts": {
 		"build": "wp-scripts build",
 		"format": "wp-scripts format",
@@ -25,6 +24,7 @@
 		"assets"
 	],
 	"devDependencies": {
-		"@wordpress/scripts": "^30.6.0"
+		"@wordpress/env": "^10.22.0",
+		"@wordpress/scripts": "^30.15.0"
 	}
 }

@@ -19,6 +19,7 @@ if ( ! $count ) :
 	<section class="main">
 		<form action="options.php" method="post">
 		<?php
+		wp_nonce_field( 'local_google_fonts', 'local_google_fonts_nonce' );
 		settings_fields( 'local_google_fonts_settings_page' );
 		do_settings_sections( 'local_google_fonts_settings_page' );
 
@@ -28,14 +29,15 @@ if ( ! $count ) :
 		?>
 					
 	<hr>
-	<h2><?php printf( esc_html__( _n( '%d Google font source found on your site.', '%d Google font sources found on your site.', $count, 'local-google-fonts' ) ), $count ); ?></h2>
+	<?php /* Translators: %d: Count of sites */ ?>
+	<h2><?php printf( esc_html( _n( '%d Google font source found on your site.', '%d Google font sources found on your site.', $count, 'local-google-fonts' ) ), esc_html( $count ) ); ?></h2>
 
 	<p><?php esc_html_e( 'This page shows all discovered Google Fonts over time. If you miss a font start browsing your front end so they end up showing here.', 'local-google-fonts' ); ?></p>
 	
 		<?php foreach ( $buffer as $id => $data ) : ?>
 
-	<h3><?php esc_html_e( 'Handle', 'local-google-fonts' ); ?>: <code><?php esc_html_e( $data['handle'] ); ?></code></h3>
-	<p><?php esc_html_e( 'Original URL', 'local-google-fonts' ); ?>: <a href="<?php echo esc_url( $data['src'] ); ?>" class="dashicons dashicons-external" target="_blank" title="<?php esc_attr_e( 'show original URL', 'local-google-fonts' ); ?>"></a><code class="original-url"><?php echo rawurldecode( $data['src'] ); ?></code></p>
+	<h3><?php esc_html_e( 'Handle', 'local-google-fonts' ); ?>: <code><?php echo esc_html( $data['handle'] ); ?></code></h3>
+	<p><?php esc_html_e( 'Original URL', 'local-google-fonts' ); ?>: <a href="<?php echo esc_url( $data['src'] ); ?>" class="dashicons dashicons-external" target="_blank" title="<?php esc_attr_e( 'show original URL', 'local-google-fonts' ); ?>"></a><code class="original-url"><?php echo esc_html( rawurldecode( $data['src'] ) ); ?></code></p>
 
 			<?php $fontinfo = $this->get_parser( $data['src'] )->get_info(); ?>
 
@@ -65,11 +67,12 @@ if ( ! $count ) :
 						<?php endforeach ?>
 						</p>
 						<details>
-							<summary><strong><?php printf( esc_html__( '%1$d of %2$d files loaded.', 'local-google-fonts' ), $font['loaded'], $font['total'] ); ?></strong></summary>
+							<?php /* Translators: %1$d: loaded, %2$d: total */ ?>
+							<summary><strong><?php printf( esc_html__( '%1$d of %2$d files loaded.', 'local-google-fonts' ), esc_html( $font['loaded'] ), esc_html( $font['total'] ) ); ?></strong></summary>
 							<div style="max-height: 280px; overflow: scroll;font-size: small;white-space: nowrap; overflow: hidden; overflow-y: auto;" class="code">
 							<?php foreach ( $font['faces'] as $face ) : ?>
-								<div>
-								<strong><?php printf( '%s %s', $face['style'], $face['weight'] ); ?></strong>
+								<div>									
+								<strong><?php printf( '%s %s', esc_html( $face['style'] ), esc_html( $face['weight'] ) ); ?></strong>
 									<ul>
 									<li>
 									<?php if ( $face['loaded'] ) : ?>
@@ -89,14 +92,17 @@ if ( ! $count ) :
 					</td>
 					<td>
 						<?php if ( $font['loaded'] == $font['total'] ) : ?>
-							<?php printf( '%s %s', '<strong>✔</strong>', sprintf( esc_html__( 'loaded from %s', 'local-google-fonts' ), '<code>' . wp_parse_url( $font['stylesheet'], PHP_URL_HOST ) . '</code>' ) ); ?>
+							<?php /* Translators: %s: Hostname */ ?>
+							<?php printf( '%s %s', '<strong>✔</strong>', sprintf( esc_html__( 'loaded from %s', 'local-google-fonts' ), '<code>' . esc_url( wp_parse_url( $font['stylesheet'], PHP_URL_HOST ) ) . '</code>' ) ); ?>
 						<?php elseif ( $font['loaded'] > 0 ) : ?>
-							<?php printf( '%s %s', '<strong class="wp-ui-text-notification">✕</strong>', sprintf( esc_html__( 'partially loaded, some files are loaded from %s', 'local-google-fonts' ), '<code>' . wp_parse_url( $data['src'], PHP_URL_HOST ) . '</code>' ) ); ?>
+							<?php /* Translators: %s: Hostname */ ?>
+							<?php printf( '%s %s', '<strong class="wp-ui-text-notification">✕</strong>', sprintf( esc_html__( 'partially loaded, some files are loaded from %s', 'local-google-fonts' ), '<code>' . esc_url( wp_parse_url( $data['src'], PHP_URL_HOST ) ) . '</code>' ) ); ?>
 						<?php else : ?>
-							<?php printf( '%s %s', '<strong class="wp-ui-text-notification">✕</strong>', sprintf( esc_html__( 'loaded from %s', 'local-google-fonts' ), '<code>' . wp_parse_url( $data['src'], PHP_URL_HOST ) . '</code>' ) ); ?>
+							<?php /* Translators: %s: Hostname */ ?>
+							<?php printf( '%s %s', '<strong class="wp-ui-text-notification">✕</strong>', sprintf( esc_html__( 'loaded from %s', 'local-google-fonts' ), '<code>' . esc_url( wp_parse_url( $data['src'], PHP_URL_HOST ) ) . '</code>' ) ); ?>
 						<?php endif; ?>
 						<?php if ( $font['filesize'] ) : ?>
-							<p><?php esc_html_e( size_format( $font['filesize'] ) ); ?></p>
+							<p><?php echo esc_html( size_format( $font['filesize'] ) ); ?></p>
 						<?php endif; ?>
 					</td>
 
@@ -109,7 +115,7 @@ if ( ! $count ) :
 			<button class="host-locally button button-primary" name="hostlocal" value="<?php echo esc_attr( $data['handle'] ); ?>"><?php esc_html_e( 'Reload Fonts', 'local-google-fonts' ); ?></button>
 			<button class="host-locally button button-link-delete" name="removelocal" value="<?php echo esc_attr( $data['handle'] ); ?>"><?php esc_html_e( 'Remove hosted files', 'local-google-fonts' ); ?></button>
 			<?php else : ?>
-			 <button class="host-locally button button-primary" name="hostlocal" value="<?php echo esc_attr( $data['handle'] ); ?>"><?php esc_html_e( 'Host locally', 'local-google-fonts' ); ?></button>
+			<button class="host-locally button button-primary" name="hostlocal" value="<?php echo esc_attr( $data['handle'] ); ?>"><?php esc_html_e( 'Host locally', 'local-google-fonts' ); ?></button>
 			<?php endif; ?>
 		</p>
 	<?php endif; ?>
@@ -127,7 +133,9 @@ if ( ! $count ) :
 	</section>
 	<aside class="lgf-side">
 
-		<h3><?php printf( esc_attr__( 'Optimize %s', 'local-google-fonts' ), wp_parse_url( get_option( 'home' ), PHP_URL_HOST ) ); ?></h3>
+		<?php /* Translators: %s: Hostname */ ?>
+		<h3><?php printf( esc_attr__( 'Optimize %s', 'local-google-fonts' ), esc_url( wp_parse_url( get_option( 'home' ), PHP_URL_HOST ) ) ); ?></h3>
+		<?php /* Translators: %s: Link to Codeable */ ?>
 		<p><?php printf( esc_attr__( 'We partner with %s to provide a trusted resource for hiring top quality premium support to help you optimize your site.', 'local-google-fonts' ), '<a href="https://codeable.io/?ref=ebTBq" ref="noopener noreferrer" target="_blank">Codeable</a>' ); ?></p>
 
 		<a href="https://codeable.io/?ref=ebTBq" class="codable-link" ref="noopener noreferrer" target="_blank" title="<?php esc_attr_e( 'visit Codeable', 'local-google-fonts' ); ?>">
