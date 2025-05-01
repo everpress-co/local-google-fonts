@@ -38,6 +38,7 @@ jobs:
         run: |
           [ -f "package.json" ] && npm install --no-fund --silent || echo "No package.json file found"
           [ -f "composer.json" ] && composer install --no-dev --quiet || echo "No composer.json file found"
+          sudo apt-get install -y imagemagick
 
       - name: 📚 Convert Readme.md to WordPress Readme
         uses: everpress-co/action-md2wp@main
@@ -60,6 +61,7 @@ jobs:
 
       - name: 🧹 Cleanup
         run: |
+          echo "Cleanup"
           rm -f README.md
 
       - name: 🗜️ Zip the contents of the dist directory with project name and version
