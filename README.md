@@ -99,6 +99,9 @@ You may have loaded a subset which doesn't included required characters. Check a
 
 ### Unreleased
 
+- fixed: failed font downloads publishing remote font URLs in the local stylesheet
+- fixed: saving one Google Fonts option no longer enables the other option
+- fixed: Host, Reload, and Remove buttons ignoring font handles with uppercase letters or other characters
 - improved: stricter handling of font source URLs and downloads
 - changed: font sources from unsupported hosts are no longer processed and are removed from the settings page
 
