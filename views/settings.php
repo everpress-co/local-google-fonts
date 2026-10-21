@@ -54,7 +54,7 @@ if ( ! $count ) :
 		<?php foreach ( $buffer as $id => $data ) : ?>
 
 			<?php
-			if ( ! LGF_Url::is_allowed_stylesheet_url( $data['src'] ) ) {
+			if ( ! \EverPress\LGF_Url::is_allowed_stylesheet_url( $data['src'] ) ) {
 				continue;
 			}
 			$parser = $this->get_parser( $data['src'] );
