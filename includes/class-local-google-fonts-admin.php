@@ -69,17 +69,18 @@ class LGF_Admin {
 		if ( isset( $_POST['subsets'] ) && wp_verify_nonce( $nonce, 'local_google_fonts' ) ) {
 			$posted_subsets = wp_unslash( $_POST['subsets'] );
 			foreach ( (array) $posted_subsets as $handle => $subset_values ) {
-				$handle = sanitize_key( $handle );
-				if ( isset( $buffer[ $handle ] ) ) {
-					$buffer[ $handle ]['subsets'] = array_map( 'sanitize_key', (array) $subset_values );
+				$handle = $this->existing_buffer_handle( $handle, $buffer );
+				if ( null === $handle ) {
+					continue;
 				}
+				$buffer[ $handle ]['subsets'] = array_map( 'sanitize_key', (array) $subset_values );
 			}
 		}
 		update_option( 'local_google_fonts_buffer', $buffer );
 
 		if ( isset( $_POST['hostlocal'] ) && wp_verify_nonce( $nonce, 'local_google_fonts' ) ) {
-			$handle = sanitize_key( wp_unslash( $_POST['hostlocal'] ) );
-			if ( isset( $buffer[ $handle ] ) && false !== LGF::normalize_css_url( $buffer[ $handle ]['src'] ) ) {
+			$handle = $this->existing_buffer_handle( wp_unslash( $_POST['hostlocal'] ), $buffer );
+			if ( null !== $handle && false !== LGF::normalize_css_url( $buffer[ $handle ]['src'] ) ) {
 				$class->remove_set( $buffer[ $handle ]['id'] );
 				$class->process_url( $buffer[ $handle ]['src'], $handle );
 
@@ -87,8 +88,8 @@ class LGF_Admin {
 		}
 
 		if ( isset( $_POST['removelocal'] ) && wp_verify_nonce( $nonce, 'local_google_fonts' ) ) {
-			$handle = sanitize_key( wp_unslash( $_POST['removelocal'] ) );
-			if ( isset( $buffer[ $handle ] ) ) {
+			$handle = $this->existing_buffer_handle( wp_unslash( $_POST['removelocal'] ), $buffer );
+			if ( null !== $handle ) {
 				$class->remove_set( $buffer[ $handle ]['id'] );
 			}
 		}
@@ -99,11 +100,39 @@ class LGF_Admin {
 
 		$sanitized = array();
 		if ( is_array( $options ) ) {
-			$sanitized['auto_load']     = ! empty( $options['auto_load'] );
-			$sanitized['relative_urls'] = ! empty( $options['relative_urls'] );
+			if ( ! empty( $options['auto_load'] ) ) {
+				$sanitized['auto_load'] = true;
+			}
+			if ( ! empty( $options['relative_urls'] ) ) {
+				$sanitized['relative_urls'] = true;
+			}
 		}
 
 		return $sanitized;
+	}
+
+	/**
+	 * Accept a font handle only when it is already a buffer key.
+	 *
+	 * Buffer keys are the original style handles. Changing them with sanitize_key()
+	 * drops mixed-case handles and other characters before the lookup.
+	 *
+	 * @since [Unreleased]
+	 *
+	 * @param mixed $handle Posted handle.
+	 * @param mixed $buffer Stored font buffer.
+	 * @return string|null Handle when it exists in the buffer, otherwise null.
+	 */
+	private function existing_buffer_handle( $handle, $buffer ) {
+		if ( is_int( $handle ) ) {
+			$handle = (string) $handle;
+		}
+
+		if ( ! is_string( $handle ) || ! is_array( $buffer ) || ! isset( $buffer[ $handle ] ) ) {
+			return null;
+		}
+
+		return $handle;
 	}
 
 	public function settings( $args ) {
