@@ -41,7 +41,8 @@ class LGF_Parser {
 
 			$font_faces = explode( '@font-face', $remote_styles );
 
-			$styles = $remote_styles;
+			$styles  = $remote_styles;
+			$publish = $remote_styles;
 
 			// Loop all our font-face declarations.
 			foreach ( $font_faces as $font_face ) {
@@ -53,6 +54,8 @@ class LGF_Parser {
 				if ( false === strpos( $style, 'font-family' ) ) {
 					continue;
 				}
+
+				$face_decl = '@font-face' . $style . '}';
 
 				// Get an array of our font-families.
 				preg_match_all( '/font-family.*?\;/', $style, $matched_font_families );
@@ -107,6 +110,9 @@ class LGF_Parser {
 					$remote_url = $this->get_absolute_path( $remote_url );
 
 					if ( ! $this->provider || ! LGF::is_font_file_url( $remote_url, $this->provider ) ) {
+						// Drop faces that must not stay as remote URLs in the published stylesheet.
+						$styles  = str_replace( $face_decl, '', $styles );
+						$publish = str_replace( $face_decl, '', $publish );
 						continue;
 					}
 
@@ -190,7 +196,7 @@ class LGF_Parser {
 
 			}
 
-			$this->remote_styles .= $remote_styles;
+			$this->remote_styles .= $publish;
 			$this->styles        .= $styles;
 		}
 

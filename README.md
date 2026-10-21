@@ -100,6 +100,7 @@ You may have loaded a subset which doesn't included required characters. Check a
 ### Unreleased
 
 - fixed: partial font downloads no longer publish stylesheets that still point at Google
+- fixed: rejected font file URLs are omitted from published stylesheets instead of being left as remote links
 - improved: stricter handling of font source URLs and downloads
 - changed: font sources from unsupported hosts are no longer processed and are removed from the settings page
 
