@@ -337,6 +337,10 @@ class LGF {
 				}
 
 				$data = wp_remote_retrieve_body( $response );
+				if ( '' === $data ) {
+					continue;
+				}
+
 				if ( ! $WP_Filesystem->put_contents( $face['file'], $data ) ) {
 					continue;
 				}
