@@ -296,7 +296,8 @@ class LGF {
 			$relative_urls = false;
 		}
 
-		$saved_files = 0;
+		$saved_files    = 0;
+		$eligible_faces = 0;
 
 		foreach ( $info as $font ) {
 
@@ -305,6 +306,8 @@ class LGF {
 				if ( false === $provider || ! self::is_font_file_url( $face['remote_url'], $provider ) ) {
 					continue;
 				}
+
+				++$eligible_faces;
 
 				$response = wp_safe_remote_get(
 					$face['remote_url'],
@@ -349,6 +352,11 @@ class LGF {
 				$local_file = add_query_arg( 'c', time(), $url );
 				$stylesheet = str_replace( $face['remote_url'], $local_file, $stylesheet );
 			}
+		}
+
+		// Do not publish a partial stylesheet: file_exists() would skip retries and leave remote URLs.
+		if ( $saved_files > 0 && $saved_files < $eligible_faces ) {
+			return $src;
 		}
 
 		// The local file stops later page views from downloading again.
