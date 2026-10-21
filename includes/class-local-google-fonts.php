@@ -68,7 +68,7 @@ class LGF {
 	 *
 	 * Only supported font hosts are accepted (HTTPS, official CSS path).
 	 *
-	 * @since [Unreleased]
+	 * @since 0.25.0
 	 *
 	 * @param string $url Stylesheet URL.
 	 * @return string|false Normalized HTTPS URL, or false if unsupported.
@@ -82,7 +82,7 @@ class LGF {
 	/**
 	 * Provider key for a valid stylesheet URL.
 	 *
-	 * @since [Unreleased]
+	 * @since 0.25.0
 	 *
 	 * @param string $url Stylesheet URL.
 	 * @return string|false Provider key, or false if unsupported.
@@ -96,7 +96,7 @@ class LGF {
 	/**
 	 * Whether a URL points at a font file on the provider's font host.
 	 *
-	 * @since [Unreleased]
+	 * @since 0.25.0
 	 *
 	 * @param string $url      Font file URL.
 	 * @param string $provider Provider key from get_provider_for_css_url().
@@ -137,7 +137,7 @@ class LGF {
 	}
 
 	/**
-	 * @since [Unreleased]
+	 * @since 0.25.0
 	 *
 	 * @param string $url Stylesheet URL.
 	 * @return array{url: string, provider: string}|false
@@ -496,7 +496,7 @@ class LGF {
 	/**
 	 * Drop buffered sources that are not on a supported font host and remove their files.
 	 *
-	 * @since [Unreleased]
+	 * @since 0.25.0
 	 */
 	public function remove_unsupported_sources() {
 		$buffer = get_option( 'local_google_fonts_buffer', array() );
@@ -571,7 +571,7 @@ class LGF {
 	/**
 	 * Whether a response Content-Type header indicates a font file.
 	 *
-	 * @since [Unreleased]
+	 * @since 0.25.0
 	 *
 	 * @param string $content_type Raw Content-Type header value.
 	 * @return bool
