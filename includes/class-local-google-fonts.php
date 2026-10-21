@@ -233,12 +233,11 @@ class LGF {
 		// remove 'ver' query arg as it is added by WP
 		$src = preg_replace( '/&ver=([^&]+)/', '', $src );
 
-		$normalized = self::normalize_css_url( $src );
-		if ( false === $normalized ) {
+		if ( false === self::normalize_css_url( $src ) ) {
 			return $src;
 		}
-		$src = $normalized;
 
+		// Hash the original string so existing font folders keep their names.
 		$id = md5( $src );
 
 		if ( ! function_exists( 'download_url' ) ) {
@@ -389,12 +388,11 @@ class LGF {
 		// remove 'ver' query arg as it is added by WP
 		$src = preg_replace( '/&ver=([^&]+)/', '', $src );
 
-		$normalized = self::normalize_css_url( $src );
-		if ( false === $normalized ) {
+		if ( false === self::normalize_css_url( $src ) ) {
 			return $org;
 		}
-		$src = $normalized;
 
+		// Hash the original string so existing font folders keep their names.
 		$id = md5( $src );
 
 		$folder     = self::get_folder();

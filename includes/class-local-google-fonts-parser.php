@@ -213,17 +213,18 @@ class LGF_Parser {
 	}
 
 	public function set_src( $src ) {
+		// Folder name follows the original string. The normalized URL is only used for the request.
+		$this->id = md5( (string) $src );
+
 		$normalized = LGF::normalize_css_url( $src );
 		if ( false === $normalized ) {
 			$this->src      = $src;
 			$this->provider = null;
-			$this->id       = md5( (string) $src );
 			return;
 		}
 
 		$this->src      = $normalized;
 		$this->provider = LGF::get_provider_for_css_url( $normalized );
-		$this->id       = md5( $normalized );
 	}
 
 	public function get_src() {
