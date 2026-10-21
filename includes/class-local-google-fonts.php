@@ -7,6 +7,13 @@ class LGF {
 	private static $instance = null;
 
 	/**
+	 * Maximum number of discovered font sources stored in the buffer.
+	 *
+	 * @var int
+	 */
+	private static $buffer_max_entries = 100;
+
+	/**
 	 * Supported font providers (stylesheet host and font file host).
 	 *
 	 * @var array<string, array{css_host: string, font_host: string}>
@@ -33,6 +40,7 @@ class LGF {
 		add_filter( 'local_google_fonts_replace_url', array( $this, 'google_to_local_url' ), 10, 2 );
 
 		add_action( 'admin_notices', array( $this, 'maybe_welcome_message' ) );
+		add_action( 'admin_init', array( $this, 'remove_unsupported_sources' ) );
 
 		add_filter( 'plugin_action_links', array( &$this, 'add_action_link' ), 10, 2 );
 	}
@@ -402,7 +410,15 @@ class LGF {
 				$handle = $id;
 			}
 
-			$buffer            = get_option( 'local_google_fonts_buffer', array() );
+			$buffer = get_option( 'local_google_fonts_buffer', array() );
+			if ( ! is_array( $buffer ) ) {
+				$buffer = array();
+			}
+
+			if ( ! isset( $buffer[ $handle ] ) && count( $buffer ) >= self::$buffer_max_entries ) {
+				return $org;
+			}
+
 			$buffer[ $handle ] = array(
 				'id'     => $id,
 				'handle' => $handle,
@@ -452,6 +468,38 @@ class LGF {
 
 	public function clear_option() {
 		delete_option( 'local_google_fonts_buffer' );
+	}
+
+	/**
+	 * Drop buffered sources that are not on a supported font host and remove their files.
+	 *
+	 * @since [Unreleased]
+	 */
+	public function remove_unsupported_sources() {
+		$buffer = get_option( 'local_google_fonts_buffer', array() );
+		if ( ! is_array( $buffer ) || empty( $buffer ) ) {
+			return;
+		}
+
+		$changed = false;
+
+		foreach ( $buffer as $handle => $data ) {
+			$src = isset( $data['src'] ) ? $data['src'] : '';
+			if ( false !== self::normalize_css_url( $src ) ) {
+				continue;
+			}
+
+			if ( ! empty( $data['id'] ) ) {
+				$this->remove_set( $data['id'] );
+			}
+
+			unset( $buffer[ $handle ] );
+			$changed = true;
+		}
+
+		if ( $changed ) {
+			update_option( 'local_google_fonts_buffer', $buffer );
+		}
 	}
 
 	public function remove_set( $id = null ) {

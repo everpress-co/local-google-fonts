@@ -2,6 +2,13 @@
 
 $buffer = get_option( 'local_google_fonts_buffer', array() );
 
+foreach ( $buffer as $handle => $data ) {
+	$src = isset( $data['src'] ) ? $data['src'] : '';
+	if ( false === \EverPress\LGF::normalize_css_url( $src ) ) {
+		unset( $buffer[ $handle ] );
+	}
+}
+
 $upload_dir = wp_get_upload_dir();
 $folder     = $upload_dir['error'] ? WP_CONTENT_DIR . '/uploads/fonts' : $upload_dir['basedir'] . '/fonts';
 $folder_url = $upload_dir['error'] ? WP_CONTENT_URL . '/uploads/fonts' : $upload_dir['baseurl'] . '/fonts';

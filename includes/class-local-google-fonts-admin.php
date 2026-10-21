@@ -80,7 +80,7 @@ class LGF_Admin {
 
 		if ( isset( $_POST['hostlocal'] ) && wp_verify_nonce( $nonce, 'local_google_fonts' ) ) {
 			$handle = sanitize_key( wp_unslash( $_POST['hostlocal'] ) );
-			if ( isset( $buffer[ $handle ] ) ) {
+			if ( isset( $buffer[ $handle ] ) && false !== LGF::normalize_css_url( $buffer[ $handle ]['src'] ) ) {
 				$class->remove_set( $buffer[ $handle ]['id'] );
 				$class->process_url( $buffer[ $handle ]['src'], $handle );
 
