@@ -241,11 +241,14 @@ class LGF {
 
 		$plugin_data = get_plugin_data( LGF_PLUGIN_FILE );
 
+		$safe_handle = str_replace( '*/', '', (string) $handle );
+		$safe_src    = esc_url_raw( str_replace( '*/', '', $src ) );
+
 		$style  = "/*\n";
 		$style .= ' * ' . sprintf( 'Font file created by %s %s', $plugin_data['Name'], $plugin_data['Version'] ) . "\n";
 		$style .= ' * Created: ' . gmdate( 'r' ) . "\n";
-		$style .= ' * Handle: ' . esc_attr( $handle ) . "\n";
-		$style .= ' * Original URL: ' . esc_attr( $src ) . "\n";
+		$style .= ' * Handle: ' . $safe_handle . "\n";
+		$style .= ' * Original URL: ' . $safe_src . "\n";
 		$style .= "*/\n\n";
 
 		$query = wp_parse_url( $src, PHP_URL_QUERY );
@@ -267,12 +270,13 @@ class LGF {
 		$class  = LGF_Admin::get_instance();
 		$parser = $class->get_parser( $src );
 
-		$info       = $parser->get_info();
 		$stylesheet = $parser->get_remote_styles();
-
-		if ( is_wp_error( $parser ) ) {
+		if ( '' === $stylesheet ) {
 			return $src;
 		}
+
+		$info     = $parser->get_info();
+		$provider = self::get_provider_for_css_url( $src );
 
 		$options = get_option( 'local_google_fonts' );
 		if ( isset( $options['relative_urls'] ) ) {
@@ -285,31 +289,62 @@ class LGF {
 
 			foreach ( $font['faces'] as $face ) {
 
-				$response = wp_remote_get( $face['remote_url'], array( 'user-agent' => $this->user_agent ) );
-
-				if ( ! is_wp_error( $response ) ) {
-					if ( ! is_dir( dirname( $face['file'] ) ) ) {
-						wp_mkdir_p( dirname( $face['file'] ) );
-					}
-					$data = wp_remote_retrieve_body( $response );
-
-					$WP_Filesystem->put_contents( $face['file'], $data );
-
-					$url = $face['local_url'];
-					if ( $relative_urls ) {
-						$url = $face['relative_url'];
-					}
-
-					$local_file = add_query_arg( 'c', time(), $url );
-					$stylesheet = str_replace( $face['remote_url'], $local_file, $stylesheet );
-
+				if ( false === $provider || ! self::is_font_file_url( $face['remote_url'], $provider ) ) {
+					continue;
 				}
+
+				$response = wp_safe_remote_get(
+					$face['remote_url'],
+					array(
+						'redirection'         => 0,
+						'timeout'             => 30,
+						'limit_response_size' => 5242880,
+						'user-agent'          => $this->user_agent,
+					)
+				);
+
+				if ( is_wp_error( $response ) ) {
+					continue;
+				}
+
+				if ( 200 !== (int) wp_remote_retrieve_response_code( $response ) ) {
+					continue;
+				}
+
+				$content_type = wp_remote_retrieve_header( $response, 'content-type' );
+				if ( is_string( $content_type ) && '' !== $content_type && ! self::is_font_content_type( $content_type ) ) {
+					continue;
+				}
+
+				$face_dir = dirname( $face['file'] );
+				if ( ! wp_mkdir_p( $face_dir ) ) {
+					continue;
+				}
+
+				$data = wp_remote_retrieve_body( $response );
+				if ( ! $WP_Filesystem->put_contents( $face['file'], $data ) ) {
+					continue;
+				}
+
+				$url = $face['local_url'];
+				if ( $relative_urls ) {
+					$url = $face['relative_url'];
+				}
+
+				$local_file = add_query_arg( 'c', time(), $url );
+				$stylesheet = str_replace( $face['remote_url'], $local_file, $stylesheet );
 			}
 		}
 
 		$style .= $stylesheet;
 
-		$WP_Filesystem->put_contents( $new_dir, $style );
+		if ( ! wp_mkdir_p( dirname( $new_dir ) ) ) {
+			return $src;
+		}
+
+		if ( ! $WP_Filesystem->put_contents( $new_dir, $style ) ) {
+			return $src;
+		}
 
 		return $new_src;
 	}
@@ -385,6 +420,10 @@ class LGF {
 
 		}
 
+		if ( ! file_exists( $stylesheet ) ) {
+			return $org;
+		}
+
 		$src = add_query_arg( 'v', filemtime( $stylesheet ), $stylesheet_url );
 
 		return $src;
@@ -456,6 +495,29 @@ class LGF {
 		}
 
 		return $links;
+	}
+
+	/**
+	 * Whether a response Content-Type header indicates a font file.
+	 *
+	 * @since [Unreleased]
+	 *
+	 * @param string $content_type Raw Content-Type header value.
+	 * @return bool
+	 */
+	private static function is_font_content_type( $content_type ) {
+		$parts        = explode( ';', $content_type, 2 );
+		$content_type = strtolower( trim( $parts[0] ) );
+
+		if ( 0 === strpos( $content_type, 'font/' ) ) {
+			return true;
+		}
+
+		if ( 0 === strpos( $content_type, 'application/font' ) ) {
+			return true;
+		}
+
+		return false;
 	}
 
 	private function wp_filesystem() {
