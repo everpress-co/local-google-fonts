@@ -3,7 +3,7 @@
 Contributors: everpress, xaverb  
 Tags: googlefonts, google, fonts, gdpr, font  
 Requires at least: 4.6  
-Tested up to: 6.8  
+Tested up to: 7.1  
 Stable tag: 0.24.0  
 Requires PHP: 7.4  
 License: GPLv2 or later  
@@ -96,6 +96,14 @@ Slider Revolution uses it's own way to load Google Fonts and LGF cannot handle t
 You may have loaded a subset which doesn't included required characters. Check additional subsets on the settings page and reload your font.
 
 ## Changelog
+
+### Unreleased
+
+- fixed: partial font downloads no longer publish stylesheets that still point at Google
+- fixed: empty font responses are no longer saved as zero-byte local files
+- fixed: rejected font file URLs are omitted from published stylesheets instead of being left as remote links
+- improved: stricter handling of font source URLs and downloads
+- changed: font sources from unsupported hosts are no longer processed and are removed from the settings page
 
 ### 0.24.0
 

@@ -1,14 +1,17 @@
 <?php
 
+namespace EverPress;
+
+defined( 'ABSPATH' ) || exit;
+
 /*
 Thanks to https://github.com/WPTT/webfont-loader for parsing help
 */
 
-namespace EverPress;
-
 class LGF_Parser {
 
 	private $src;
+	private $provider;
 	private $id;
 	private $styles;
 	private $remote_styles;
@@ -38,7 +41,8 @@ class LGF_Parser {
 
 			$font_faces = explode( '@font-face', $remote_styles );
 
-			$styles = $remote_styles;
+			$styles  = $remote_styles;
+			$publish = $remote_styles;
 
 			// Loop all our font-face declarations.
 			foreach ( $font_faces as $font_face ) {
@@ -50,6 +54,8 @@ class LGF_Parser {
 				if ( false === strpos( $style, 'font-family' ) ) {
 					continue;
 				}
+
+				$face_decl = '@font-face' . $style . '}';
 
 				// Get an array of our font-families.
 				preg_match_all( '/font-family.*?\;/', $style, $matched_font_families );
@@ -98,14 +104,29 @@ class LGF_Parser {
 
 					// Add the file URL.
 					$remote_url = rtrim( ltrim( $match[0], 'url(' ), ')' );
+					$remote_url = trim( $remote_url, "'\"" );
 
 					// Make sure to convert relative URLs to absolute.
 					$remote_url = $this->get_absolute_path( $remote_url );
+
+					if ( ! $this->provider || ! LGF::is_font_file_url( $remote_url, $this->provider ) ) {
+						// Drop faces that must not stay as remote URLs in the published stylesheet.
+						$styles  = str_replace( $face_decl, '', $styles );
+						$publish = str_replace( $face_decl, '', $publish );
+						continue;
+					}
+
+					$path = wp_parse_url( $remote_url, PHP_URL_PATH );
+					$ext  = is_string( $path ) ? strtolower( pathinfo( $path, PATHINFO_EXTENSION ) ) : '';
+					if ( $ext !== strtolower( $format ) ) {
+						continue;
+					}
 
 					$version = '';
 					if ( preg_match( '/v(\d+)/', $remote_url, $m ) ) {
 						$version = 'v' . $m[1];
 					}
+					$version = $this->sanitize_filename_segment( $version );
 
 					$font_style = null;
 					if ( isset( $matched_font_styles[ $i ][0] ) ) {
@@ -125,8 +146,15 @@ class LGF_Parser {
 						$unicode_range = trim( str_replace( array( "'", ';' ), '', $unicode_range ) );
 					}
 
-					$subset   = $this->get_subset_by_range( $unicode_range );
-					$filename = $folder . '/' . $this->id . '/' . sprintf( '%s-%s-%s-%s-%s.%s', $sanitized, $subset, $version, $font_style, $font_weight, $format );
+					$subset      = $this->get_subset_by_range( $unicode_range );
+					$subset      = $subset ? sanitize_key( $subset ) : 'unknown';
+					$font_style  = $this->sanitize_filename_segment( $font_style );
+					$font_weight = $this->sanitize_filename_segment( $font_weight );
+					$format_key  = sanitize_key( $format );
+					$basename    = sanitize_file_name(
+						sprintf( '%s-%s-%s-%s-%s.%s', $sanitized, $subset, $version, $font_style, $font_weight, $format_key )
+					);
+					$filename    = $folder . '/' . $this->id . '/' . $basename;
 
 					$result[ $sanitized ]['variants'][] = sprintf( '%s %s', $font_style, $font_weight );
 
@@ -168,7 +196,7 @@ class LGF_Parser {
 
 			}
 
-			$this->remote_styles .= $remote_styles;
+			$this->remote_styles .= $publish;
 			$this->styles        .= $styles;
 		}
 
@@ -191,12 +219,18 @@ class LGF_Parser {
 	}
 
 	public function set_src( $src ) {
-		$this->id = md5( $src );
-		if ( 0 === stripos( $src, '//' ) ) {
-			$parsed_url = wp_parse_url( home_url() );
-			$src        = $parsed_url['scheme'] . ':' . $src;
+		// Folder name follows the original string. The normalized URL is only used for the request.
+		$this->id = md5( (string) $src );
+
+		$normalized = LGF::normalize_css_url( $src );
+		if ( false === $normalized ) {
+			$this->src      = $src;
+			$this->provider = null;
+			return;
 		}
-		$this->src = $src;
+
+		$this->src      = $normalized;
+		$this->provider = LGF::get_provider_for_css_url( $normalized );
 	}
 
 	public function get_src() {
@@ -217,14 +251,28 @@ class LGF_Parser {
 	private function get_absolute_path( $url ) {
 
 		if ( 0 === stripos( $url, '//' ) ) {
-			$parsed_url = wp_parse_url( $this->src );
-			return $parsed_url['scheme'] . ':' . $url;
+			return 'https:' . $url;
 		} elseif ( 0 === stripos( $url, '/' ) ) {
 			$parsed_url = wp_parse_url( $this->src );
-			return $parsed_url['scheme'] . '://' . $parsed_url['hostname'] . $url;
+			$scheme     = isset( $parsed_url['scheme'] ) ? $parsed_url['scheme'] : 'https';
+			$host       = isset( $parsed_url['host'] ) ? $parsed_url['host'] : '';
+			return $scheme . '://' . $host . $url;
 		}
 
 		return $url;
+	}
+
+	/**
+	 * @since [Unreleased]
+	 *
+	 * @param string|null $value Filename segment.
+	 * @return string
+	 */
+	private function sanitize_filename_segment( $value ) {
+		$value = strtolower( (string) $value );
+		$value = preg_replace( '/[^a-z0-9-]/', '', $value );
+
+		return '' !== $value ? $value : 'unknown';
 	}
 
 	private function get_remote_styleheet( $format = 'woff2' ) {
@@ -239,20 +287,44 @@ class LGF_Parser {
 
 	private function get_remote( $url, $args = array() ) {
 
+		$normalized = LGF::normalize_css_url( $url );
+		if ( false === $normalized ) {
+			return new \WP_Error(
+				'invalid_font_url',
+				esc_html__( 'The font stylesheet URL is not from a supported host.', 'local-google-fonts' )
+			);
+		}
+		$url = $normalized;
+
+		$defaults = array(
+			'redirection'         => 0,
+			'timeout'             => 30,
+			'limit_response_size' => 1048576,
+		);
+		$args     = wp_parse_args( $args, $defaults );
+
 		$transient_key = 'lcg_req_' . md5( $url . serialize( $args ) );
 		if ( false === ( $response = get_transient( $transient_key ) ) ) {
-			$response = wp_remote_get( $url, $args );
+			$response = wp_safe_remote_get( $url, $args );
 
 			if ( is_wp_error( $response ) ) {
 				return $response;
 			}
 			$code = wp_remote_retrieve_response_code( $response );
-			if ( 200 === $code ) {
-				set_transient( $transient_key, $response, DAY_IN_SECONDS );
-			} else {
+			if ( 200 !== (int) $code ) {
 				/* Translators: %s: URL */
 				return new \WP_Error( 'service_not_available', sprintf( esc_html__( '%s seems to be down right now. Please try again later.', 'local-google-fonts' ), $this->src ) );
 			}
+
+			$content_type = wp_remote_retrieve_header( $response, 'content-type' );
+			if ( is_string( $content_type ) && '' !== $content_type && false === stripos( $content_type, 'text/css' ) ) {
+				return new \WP_Error(
+					'invalid_response',
+					esc_html__( 'The font stylesheet response was not valid CSS.', 'local-google-fonts' )
+				);
+			}
+
+			set_transient( $transient_key, $response, DAY_IN_SECONDS );
 		}
 		return $response;
 	}
