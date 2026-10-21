@@ -1,7 +1,8 @@
 <?php
 
-
 namespace EverPress;
+
+defined( 'ABSPATH' ) || exit;
 
 class LGF_Admin {
 

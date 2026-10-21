@@ -3,11 +3,11 @@
 Contributors: everpress, xaverb  
 Tags: googlefonts, google, fonts, gdpr, font  
 Requires at least: 4.6  
-Tested up to: 6.8  
+Tested up to: 7.1  
 Stable tag: 0.24.0  
 Requires PHP: 7.4  
 License: GPLv2 or later  
-Donate link: <https://evp.to/donate>
+Donate link: https://evp.to/donate
 
 Host your used Google fonts on your server and make your site more GDPR compliant 💯.
 

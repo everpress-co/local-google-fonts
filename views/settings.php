@@ -1,5 +1,9 @@
 <?php
 
+defined( 'ABSPATH' ) || exit;
+
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound -- Included from LGF_Admin::render_settings(); variables are method-scoped.
+
 $buffer = get_option( 'local_google_fonts_buffer', array() );
 
 foreach ( $buffer as $handle => $data ) {
@@ -100,13 +104,13 @@ if ( ! $count ) :
 					<td>
 						<?php if ( $font['loaded'] == $font['total'] ) : ?>
 							<?php /* Translators: %s: Hostname */ ?>
-							<?php printf( '%s %s', '<strong>✔</strong>', sprintf( esc_html__( 'loaded from %s', 'local-google-fonts' ), '<code>' . esc_url( wp_parse_url( $font['stylesheet'], PHP_URL_HOST ) ) . '</code>' ) ); ?>
+							<?php printf( '%s %s', '<strong>✔</strong>', sprintf( esc_html__( 'loaded from %s', 'local-google-fonts' ), '<code>' . esc_html( wp_parse_url( $font['stylesheet'], PHP_URL_HOST ) ) . '</code>' ) ); ?>
 						<?php elseif ( $font['loaded'] > 0 ) : ?>
 							<?php /* Translators: %s: Hostname */ ?>
-							<?php printf( '%s %s', '<strong class="wp-ui-text-notification">✕</strong>', sprintf( esc_html__( 'partially loaded, some files are loaded from %s', 'local-google-fonts' ), '<code>' . esc_url( wp_parse_url( $data['src'], PHP_URL_HOST ) ) . '</code>' ) ); ?>
+							<?php printf( '%s %s', '<strong class="wp-ui-text-notification">✕</strong>', sprintf( esc_html__( 'partially loaded, some files are loaded from %s', 'local-google-fonts' ), '<code>' . esc_html( wp_parse_url( $data['src'], PHP_URL_HOST ) ) . '</code>' ) ); ?>
 						<?php else : ?>
 							<?php /* Translators: %s: Hostname */ ?>
-							<?php printf( '%s %s', '<strong class="wp-ui-text-notification">✕</strong>', sprintf( esc_html__( 'loaded from %s', 'local-google-fonts' ), '<code>' . esc_url( wp_parse_url( $data['src'], PHP_URL_HOST ) ) . '</code>' ) ); ?>
+							<?php printf( '%s %s', '<strong class="wp-ui-text-notification">✕</strong>', sprintf( esc_html__( 'loaded from %s', 'local-google-fonts' ), '<code>' . esc_html( wp_parse_url( $data['src'], PHP_URL_HOST ) ) . '</code>' ) ); ?>
 						<?php endif; ?>
 						<?php if ( $font['filesize'] ) : ?>
 							<p><?php echo esc_html( size_format( $font['filesize'] ) ); ?></p>
@@ -141,19 +145,21 @@ if ( ! $count ) :
 	<aside class="lgf-side">
 
 		<?php /* Translators: %s: Hostname */ ?>
-		<h3><?php printf( esc_attr__( 'Optimize %s', 'local-google-fonts' ), esc_url( wp_parse_url( get_option( 'home' ), PHP_URL_HOST ) ) ); ?></h3>
+		<h3><?php printf( esc_html__( 'Optimize %s', 'local-google-fonts' ), esc_html( wp_parse_url( get_option( 'home' ), PHP_URL_HOST ) ) ); ?></h3>
 		<?php /* Translators: %s: Link to Codeable */ ?>
-		<p><?php printf( esc_attr__( 'We partner with %s to provide a trusted resource for hiring top quality premium support to help you optimize your site.', 'local-google-fonts' ), '<a href="https://codeable.io/?ref=ebTBq" ref="noopener noreferrer" target="_blank">Codeable</a>' ); ?></p>
+		<p><?php printf( esc_html__( 'We partner with %s to provide a trusted resource for hiring top quality premium support to help you optimize your site.', 'local-google-fonts' ), '<a href="https://codeable.io/?ref=ebTBq" ref="noopener noreferrer" target="_blank">Codeable</a>' ); ?></p>
 
 		<a href="https://codeable.io/?ref=ebTBq" class="codable-link" ref="noopener noreferrer" target="_blank" title="<?php esc_attr_e( 'visit Codeable', 'local-google-fonts' ); ?>">
 			<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 498 127"><defs><path d="M0 126.968h499.874V0H0z"/></defs><g fill="none" fill-rule="evenodd"><path d="m193.5 52.009-8.951 4.146c-2.278-2.276-4.476-3.983-9.114-3.983-5.288 0-10.903 3.983-10.903 11.624 0 7.56 5.615 11.463 10.903 11.463 4.638 0 6.836-1.626 9.114-3.902l9.032 4.145c-4.07 6.829-10.416 9.999-18.308 9.999-9.439 0-22.05-6.828-22.05-21.705 0-14.714 12.611-21.949 22.05-21.949 7.73 0 14.239 3.333 18.226 10.162M205.273 63.878c0 7.478 5.613 11.462 10.903 11.462 5.207 0 10.903-3.984 10.903-11.462 0-7.723-5.696-11.707-10.903-11.707-5.29 0-10.903 3.984-10.903 11.707m33.035 0c0 14.795-12.531 21.786-22.132 21.786s-22.214-6.991-22.214-21.786c0-14.796 12.613-22.03 22.214-22.03 9.6 0 22.132 7.234 22.132 22.03M273.28 63.634c0-7.56-5.371-11.462-11.148-11.462-5.777 0-10.741 3.902-10.741 11.462 0 7.804 4.964 11.706 10.74 11.706 5.778 0 11.148-3.902 11.148-11.706Zm11.065-36.257v57.474H272.71v-6.666c0 3.008-5.451 7.479-12.611 7.479-8.87 0-20.017-6.991-20.017-22.03 0-14.552 11.148-21.787 20.017-21.787 7.16 0 12.611 4.715 12.611 6.666V27.377h11.636ZM299.95 59.57h20.18c-1.303-5.204-5.94-7.805-10.172-7.805-4.15 0-8.462 2.601-10.008 7.804m30.432 8.21h-30.514c1.384 5.284 5.696 8.049 11.31 8.049 5.29 0 7.324-1.22 10.335-2.845l6.427 6.259c-3.743 3.82-8.868 6.422-17.168 6.422-10.496 0-22.458-7.235-22.458-21.786 0-14.795 12.125-22.03 21.644-22.03 9.601 0 22.946 7.235 20.424 25.932M343.523 63.634c0 7.804 4.962 11.706 10.74 11.706 5.777 0 11.147-3.902 11.147-11.706 0-7.56-5.37-11.462-11.147-11.462-5.778 0-10.74 3.902-10.74 11.462m21.318-15.121v-5.934h11.635V84.85H364.84v-6.666c0 3.008-5.452 7.479-12.613 7.479-8.869 0-20.017-6.991-20.017-22.03 0-14.552 11.148-21.787 20.017-21.787 7.16 0 12.613 4.715 12.613 6.666M415.613 63.634c0-7.56-4.963-11.462-10.74-11.462-5.778 0-11.148 3.902-11.148 11.462 0 7.804 5.37 11.706 11.147 11.706 5.778 0 10.74-3.902 10.74-11.706m11.31 0c0 15.039-11.146 22.03-20.015 22.03-7.161 0-12.613-4.471-12.613-7.479v6.666h-11.635V27.377h11.635v21.136c0-1.95 5.452-6.666 12.613-6.666 8.869 0 20.016 7.235 20.016 21.787" fill="#151D23"/><path fill="#151D23" mask="url(#b)" d="M430.997 84.851h11.636V27.377h-11.636zM458.206 59.57h20.18c-1.302-5.204-5.94-7.805-10.171-7.805-4.15 0-8.462 2.601-10.009 7.804m30.432 8.21h-30.513c1.383 5.284 5.696 8.049 11.31 8.049 5.29 0 7.324-1.22 10.334-2.845l6.428 6.259c-3.742 3.82-8.87 6.422-17.168 6.422-10.497 0-22.458-7.235-22.458-21.786 0-14.795 12.124-22.03 21.644-22.03 9.601 0 22.946 7.235 20.423 25.932"/><path d="M42.362 84.645c0 23.375 18.966 42.323 42.362 42.323 23.397 0 42.362-18.948 42.362-42.323 0-23.374-18.965-42.322-42.362-42.322v42.322H42.362Z" fill="#FFB199" mask="url(#b)"/><path fill="#165260" mask="url(#b)" d="M84.724 42.323V0H0v84.645h42.362V42.323z"/></g></svg>
 		</a>
 
-		<p><?php esc_attr_e( 'Get a quote within 10 minutes without obligations.', 'local-google-fonts' ); ?></p>
+		<p><?php esc_html_e( 'Get a quote within 10 minutes without obligations.', 'local-google-fonts' ); ?></p>
 
-		<button class="button button-hero button-primary get-support"><?php esc_attr_e( 'Request Quote', 'local-google-fonts' ); ?>*</button>
+		<button class="button button-hero button-primary get-support"><?php esc_html_e( 'Request Quote', 'local-google-fonts' ); ?>*</button>
 
-		<p class="howto">* <?php esc_attr_e( 'Links to Codeable are affiliate links.', 'local-google-fonts' ); ?></p>
+		<p class="howto">* <?php esc_html_e( 'Links to Codeable are affiliate links.', 'local-google-fonts' ); ?></p>
 	</aside>
 	</div>
 </div>
+<?php
+// phpcs:enable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound

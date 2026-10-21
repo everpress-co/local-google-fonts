@@ -2,6 +2,8 @@
 
 namespace EverPress;
 
+defined( 'ABSPATH' ) || exit;
+
 class LGF {
 
 	private static $instance = null;
@@ -57,6 +59,7 @@ class LGF {
 		$upload_dir = wp_get_upload_dir();
 		$folder     = $upload_dir['error'] ? WP_CONTENT_DIR . '/uploads/fonts' : $upload_dir['basedir'] . '/fonts';
 
+		// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Public hook kept for backward compatibility.
 		return apply_filters( 'lgf_folder', $folder );
 	}
 
@@ -202,6 +205,7 @@ class LGF {
 			$folder_url = set_url_scheme( $folder_url, 'https' );
 		}
 
+		// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Public hook kept for backward compatibility.
 		return apply_filters( 'lgf_folder_url', $folder_url );
 	}
 

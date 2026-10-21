@@ -1,10 +1,12 @@
 <?php
 
+namespace EverPress;
+
+defined( 'ABSPATH' ) || exit;
+
 /*
 Thanks to https://github.com/WPTT/webfont-loader for parsing help
 */
-
-namespace EverPress;
 
 class LGF_Parser {
 
