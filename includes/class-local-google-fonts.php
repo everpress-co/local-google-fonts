@@ -2,10 +2,32 @@
 
 namespace EverPress;
 
+defined( 'ABSPATH' ) || exit;
+
 class LGF {
 
 	private static $instance = null;
-	private $user_agent      = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36';
+
+	/**
+	 * Maximum number of discovered font sources stored in the buffer.
+	 *
+	 * @var int
+	 */
+	private static $buffer_max_entries = 100;
+
+	/**
+	 * Supported font providers (stylesheet host and font file host).
+	 *
+	 * @var array<string, array{css_host: string, font_host: string}>
+	 */
+	private static $providers = array(
+		'google' => array(
+			'css_host'  => 'fonts.googleapis.com',
+			'font_host' => 'fonts.gstatic.com',
+		),
+	);
+
+	private $user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36';
 
 	private function __construct() {
 
@@ -20,6 +42,7 @@ class LGF {
 		add_filter( 'local_google_fonts_replace_url', array( $this, 'google_to_local_url' ), 10, 2 );
 
 		add_action( 'admin_notices', array( $this, 'maybe_welcome_message' ) );
+		add_action( 'admin_init', array( $this, 'remove_unsupported_sources' ) );
 
 		add_filter( 'plugin_action_links', array( &$this, 'add_action_link' ), 10, 2 );
 	}
@@ -36,7 +59,141 @@ class LGF {
 		$upload_dir = wp_get_upload_dir();
 		$folder     = $upload_dir['error'] ? WP_CONTENT_DIR . '/uploads/fonts' : $upload_dir['basedir'] . '/fonts';
 
+		// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Public hook kept for backward compatibility.
 		return apply_filters( 'lgf_folder', $folder );
+	}
+
+	/**
+	 * Normalize and validate a Google Fonts stylesheet URL.
+	 *
+	 * Only supported font hosts are accepted (HTTPS, official CSS path).
+	 *
+	 * @since 0.25.0
+	 *
+	 * @param string $url Stylesheet URL.
+	 * @return string|false Normalized HTTPS URL, or false if unsupported.
+	 */
+	public static function normalize_css_url( $url ) {
+		$parsed = self::parse_validated_css_url( $url );
+
+		return false === $parsed ? false : $parsed['url'];
+	}
+
+	/**
+	 * Provider key for a valid stylesheet URL.
+	 *
+	 * @since 0.25.0
+	 *
+	 * @param string $url Stylesheet URL.
+	 * @return string|false Provider key, or false if unsupported.
+	 */
+	public static function get_provider_for_css_url( $url ) {
+		$parsed = self::parse_validated_css_url( $url );
+
+		return false === $parsed ? false : $parsed['provider'];
+	}
+
+	/**
+	 * Whether a URL points at a font file on the provider's font host.
+	 *
+	 * @since 0.25.0
+	 *
+	 * @param string $url      Font file URL.
+	 * @param string $provider Provider key from get_provider_for_css_url().
+	 * @return bool
+	 */
+	public static function is_font_file_url( $url, $provider ) {
+		if ( ! isset( self::$providers[ $provider ] ) ) {
+			return false;
+		}
+
+		if ( ! is_string( $url ) || '' === $url ) {
+			return false;
+		}
+
+		$url = trim( $url );
+		$url = trim( $url, "'\"" );
+
+		if ( 0 === stripos( $url, '//' ) ) {
+			$url = 'https:' . $url;
+		}
+
+		$parsed = wp_parse_url( $url );
+		if ( ! is_array( $parsed ) || empty( $parsed['host'] ) ) {
+			return false;
+		}
+
+		if ( isset( $parsed['user'] ) || isset( $parsed['pass'] ) || isset( $parsed['port'] ) ) {
+			return false;
+		}
+
+		if ( ! isset( $parsed['scheme'] ) || 'https' !== strtolower( $parsed['scheme'] ) ) {
+			return false;
+		}
+
+		$font_host = self::$providers[ $provider ]['font_host'];
+
+		return strtolower( $parsed['host'] ) === strtolower( $font_host );
+	}
+
+	/**
+	 * @since 0.25.0
+	 *
+	 * @param string $url Stylesheet URL.
+	 * @return array{url: string, provider: string}|false
+	 */
+	private static function parse_validated_css_url( $url ) {
+		if ( ! is_string( $url ) || '' === $url ) {
+			return false;
+		}
+
+		$url = trim( $url );
+
+		if ( 0 === stripos( $url, '//' ) ) {
+			$url = 'https:' . $url;
+		}
+
+		$parsed = wp_parse_url( $url );
+		if ( ! is_array( $parsed ) || empty( $parsed['host'] ) ) {
+			return false;
+		}
+
+		if ( isset( $parsed['user'] ) || isset( $parsed['pass'] ) || isset( $parsed['port'] ) ) {
+			return false;
+		}
+
+		$scheme = isset( $parsed['scheme'] ) ? strtolower( $parsed['scheme'] ) : '';
+		if ( 'http' === $scheme ) {
+			$scheme = 'https';
+		}
+		if ( 'https' !== $scheme ) {
+			return false;
+		}
+
+		$path = isset( $parsed['path'] ) ? $parsed['path'] : '';
+		if ( 0 !== strpos( $path, '/css' ) ) {
+			return false;
+		}
+
+		$host = strtolower( $parsed['host'] );
+
+		foreach ( self::$providers as $provider_key => $provider ) {
+			if ( $host !== strtolower( $provider['css_host'] ) ) {
+				continue;
+			}
+
+			$normalized = 'https://' . $provider['css_host'] . $path;
+			if ( ! empty( $parsed['query'] ) ) {
+				$normalized .= '?' . $parsed['query'];
+			}
+
+			return array(
+				'url'      => $normalized,
+				'provider' => $provider_key,
+			);
+		}
+
+		return false;
 	}
 
 	public static function get_folder_url() {
@@ -48,6 +205,7 @@ class LGF {
 			$folder_url = set_url_scheme( $folder_url, 'https' );
 		}
 
+		// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Public hook kept for backward compatibility.
 		return apply_filters( 'lgf_folder_url', $folder_url );
 	}
 
@@ -75,6 +233,11 @@ class LGF {
 		// remove 'ver' query arg as it is added by WP
 		$src = preg_replace( '/&ver=([^&]+)/', '', $src );
 
+		if ( false === self::normalize_css_url( $src ) ) {
+			return $src;
+		}
+
+		// Hash the original string so existing font folders keep their names.
 		$id = md5( $src );
 
 		if ( ! function_exists( 'download_url' ) ) {
@@ -89,11 +252,14 @@ class LGF {
 
 		$plugin_data = get_plugin_data( LGF_PLUGIN_FILE );
 
+		$safe_handle = str_replace( '*/', '', (string) $handle );
+		$safe_src    = esc_url_raw( str_replace( '*/', '', $src ) );
+
 		$style  = "/*\n";
 		$style .= ' * ' . sprintf( 'Font file created by %s %s', $plugin_data['Name'], $plugin_data['Version'] ) . "\n";
 		$style .= ' * Created: ' . gmdate( 'r' ) . "\n";
-		$style .= ' * Handle: ' . esc_attr( $handle ) . "\n";
-		$style .= ' * Original URL: ' . esc_attr( $src ) . "\n";
+		$style .= ' * Handle: ' . $safe_handle . "\n";
+		$style .= ' * Original URL: ' . $safe_src . "\n";
 		$style .= "*/\n\n";
 
 		$query = wp_parse_url( $src, PHP_URL_QUERY );
@@ -115,12 +281,13 @@ class LGF {
 		$class  = LGF_Admin::get_instance();
 		$parser = $class->get_parser( $src );
 
-		$info       = $parser->get_info();
 		$stylesheet = $parser->get_remote_styles();
-
-		if ( is_wp_error( $parser ) ) {
+		if ( '' === $stylesheet ) {
 			return $src;
 		}
+
+		$info     = $parser->get_info();
+		$provider = self::get_provider_for_css_url( $src );
 
 		$options = get_option( 'local_google_fonts' );
 		if ( isset( $options['relative_urls'] ) ) {
@@ -129,35 +296,87 @@ class LGF {
 			$relative_urls = false;
 		}
 
+		$saved_files    = 0;
+		$eligible_faces = 0;
+
 		foreach ( $info as $font ) {
 
 			foreach ( $font['faces'] as $face ) {
 
-				$response = wp_remote_get( $face['remote_url'], array( 'user-agent' => $this->user_agent ) );
-
-				if ( ! is_wp_error( $response ) ) {
-					if ( ! is_dir( dirname( $face['file'] ) ) ) {
-						wp_mkdir_p( dirname( $face['file'] ) );
-					}
-					$data = wp_remote_retrieve_body( $response );
-
-					$WP_Filesystem->put_contents( $face['file'], $data );
-
-					$url = $face['local_url'];
-					if ( $relative_urls ) {
-						$url = $face['relative_url'];
-					}
-
-					$local_file = add_query_arg( 'c', time(), $url );
-					$stylesheet = str_replace( $face['remote_url'], $local_file, $stylesheet );
-
+				if ( false === $provider || ! self::is_font_file_url( $face['remote_url'], $provider ) ) {
+					continue;
 				}
+
+				++$eligible_faces;
+
+				$response = wp_safe_remote_get(
+					$face['remote_url'],
+					array(
+						'redirection' => 0,
+						'timeout'     => 30,
+						'user-agent'  => $this->user_agent,
+					)
+				);
+
+				if ( is_wp_error( $response ) ) {
+					continue;
+				}
+
+				if ( 200 !== (int) wp_remote_retrieve_response_code( $response ) ) {
+					continue;
+				}
+
+				$content_type = wp_remote_retrieve_header( $response, 'content-type' );
+				if ( is_string( $content_type ) && '' !== $content_type && ! self::is_font_content_type( $content_type ) ) {
+					continue;
+				}
+
+				$face_dir = dirname( $face['file'] );
+				if ( ! wp_mkdir_p( $face_dir ) ) {
+					continue;
+				}
+
+				$data = wp_remote_retrieve_body( $response );
+				if ( '' === $data ) {
+					continue;
+				}
+
+				if ( ! $WP_Filesystem->put_contents( $face['file'], $data ) ) {
+					continue;
+				}
+
+				++$saved_files;
+
+				$url = $face['local_url'];
+				if ( $relative_urls ) {
+					$url = $face['relative_url'];
+				}
+
+				$local_file = add_query_arg( 'c', time(), $url );
+				$stylesheet = str_replace( $face['remote_url'], $local_file, $stylesheet );
 			}
+		}
+
+		// Do not publish a partial stylesheet: file_exists() would skip retries and leave remote URLs.
+		if ( $saved_files > 0 && $saved_files < $eligible_faces ) {
+			return $src;
+		}
+
+		// The local file stops later page views from downloading again.
+		// Omit the remote stylesheet when no font file was saved.
+		if ( 0 === $saved_files ) {
+			$stylesheet = '';
 		}
 
 		$style .= $stylesheet;
 
-		$WP_Filesystem->put_contents( $new_dir, $style );
+		if ( ! wp_mkdir_p( dirname( $new_dir ) ) ) {
+			return $src;
+		}
+
+		if ( ! $WP_Filesystem->put_contents( $new_dir, $style ) ) {
+			return $src;
+		}
 
 		return $new_src;
 	}
@@ -190,6 +409,11 @@ class LGF {
 		// remove 'ver' query arg as it is added by WP
 		$src = preg_replace( '/&ver=([^&]+)/', '', $src );
 
+		if ( false === self::normalize_css_url( $src ) ) {
+			return $org;
+		}
+
+		// Hash the original string so existing font folders keep their names.
 		$id = md5( $src );
 
 		$folder     = self::get_folder();
@@ -209,7 +433,15 @@ class LGF {
 				$handle = $id;
 			}
 
-			$buffer            = get_option( 'local_google_fonts_buffer', array() );
+			$buffer = get_option( 'local_google_fonts_buffer', array() );
+			if ( ! is_array( $buffer ) ) {
+				$buffer = array();
+			}
+
+			if ( ! isset( $buffer[ $handle ] ) && count( $buffer ) >= self::$buffer_max_entries ) {
+				return $org;
+			}
+
 			$buffer[ $handle ] = array(
 				'id'     => $id,
 				'handle' => $handle,
@@ -227,6 +459,10 @@ class LGF {
 
 		}
 
+		if ( ! file_exists( $stylesheet ) ) {
+			return $org;
+		}
+
 		$src = add_query_arg( 'v', filemtime( $stylesheet ), $stylesheet_url );
 
 		return $src;
@@ -236,7 +472,9 @@ class LGF {
 	public function switch_stylesheet_src( $src, $handle ) {
 
 		if ( false !== strpos( $src, '//fonts.googleapis.com/css' ) ) {
-			$src = $this->google_to_local_url( $src, $handle );
+			if ( false !== self::normalize_css_url( $src ) ) {
+				$src = $this->google_to_local_url( $src, $handle );
+			}
 		}
 		return $src;
 	}
@@ -253,6 +491,38 @@ class LGF {
 
 	public function clear_option() {
 		delete_option( 'local_google_fonts_buffer' );
+	}
+
+	/**
+	 * Drop buffered sources that are not on a supported font host and remove their files.
+	 *
+	 * @since 0.25.0
+	 */
+	public function remove_unsupported_sources() {
+		$buffer = get_option( 'local_google_fonts_buffer', array() );
+		if ( ! is_array( $buffer ) || empty( $buffer ) ) {
+			return;
+		}
+
+		$changed = false;
+
+		foreach ( $buffer as $handle => $data ) {
+			$src = isset( $data['src'] ) ? $data['src'] : '';
+			if ( false !== self::normalize_css_url( $src ) ) {
+				continue;
+			}
+
+			if ( ! empty( $data['id'] ) ) {
+				$this->remove_set( $data['id'] );
+			}
+
+			unset( $buffer[ $handle ] );
+			$changed = true;
+		}
+
+		if ( $changed ) {
+			update_option( 'local_google_fonts_buffer', $buffer );
+		}
 	}
 
 	public function remove_set( $id = null ) {
@@ -292,10 +562,33 @@ class LGF {
 	public function add_action_link( $links, $file ) {
 
 		if ( $file == 'local-google-fonts/local-google-fonts.php' ) {
-			array_unshift( $links, '<a href="' . admin_url( 'options-general.php?page=lgf-settings' ) . '">' . esc_html__( 'Settings', 'local-google-fonts' ) . '</a>' );
+			array_unshift( $links, '<a href="' . esc_url( admin_url( 'options-general.php?page=lgf-settings' ) ) . '">' . esc_html__( 'Settings', 'local-google-fonts' ) . '</a>' );
 		}
 
 		return $links;
+	}
+
+	/**
+	 * Whether a response Content-Type header indicates a font file.
+	 *
+	 * @since 0.25.0
+	 *
+	 * @param string $content_type Raw Content-Type header value.
+	 * @return bool
+	 */
+	private static function is_font_content_type( $content_type ) {
+		$parts        = explode( ';', $content_type, 2 );
+		$content_type = strtolower( trim( $parts[0] ) );
+
+		if ( 0 === strpos( $content_type, 'font/' ) ) {
+			return true;
+		}
+
+		if ( 0 === strpos( $content_type, 'application/font' ) ) {
+			return true;
+		}
+
+		return false;
 	}
 
 	private function wp_filesystem() {

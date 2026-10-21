@@ -3,8 +3,8 @@
 Contributors: everpress, xaverb  
 Tags: googlefonts, google, fonts, gdpr, font  
 Requires at least: 4.6  
-Tested up to: 6.8  
-Stable tag: 0.24.0  
+Tested up to: 7.1  
+Stable tag: 0.25.0  
 Requires PHP: 7.4  
 License: GPLv2 or later  
 Donate link: <https://evp.to/donate>
@@ -97,7 +97,12 @@ You may have loaded a subset which doesn't included required characters. Check a
 
 ## Changelog
 
-### 0.24.0
+### 0.25.0
+
+- improved: stricter handling of font source URLs and downloads
+- changed: font sources from unsupported hosts are no longer processed and are removed from the settings page
+
+### 0.25.0
 
 - added: option to use relative URLs
 

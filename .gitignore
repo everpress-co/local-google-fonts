@@ -28,4 +28,7 @@ build/
 # dotenv environment variables file
 .env
 
+# Local review notes (not for the public repository)
+.security-audit/
+
 /vendor/
