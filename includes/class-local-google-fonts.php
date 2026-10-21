@@ -296,6 +296,8 @@ class LGF {
 			$relative_urls = false;
 		}
 
+		$saved_files = 0;
+
 		foreach ( $info as $font ) {
 
 			foreach ( $font['faces'] as $face ) {
@@ -337,6 +339,8 @@ class LGF {
 					continue;
 				}
 
+				++$saved_files;
+
 				$url = $face['local_url'];
 				if ( $relative_urls ) {
 					$url = $face['relative_url'];
@@ -345,6 +349,12 @@ class LGF {
 				$local_file = add_query_arg( 'c', time(), $url );
 				$stylesheet = str_replace( $face['remote_url'], $local_file, $stylesheet );
 			}
+		}
+
+		// The local file stops later page views from downloading again.
+		// Omit the remote stylesheet when no font file was saved.
+		if ( 0 === $saved_files ) {
+			$stylesheet = '';
 		}
 
 		$style .= $stylesheet;

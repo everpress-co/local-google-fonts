@@ -7,7 +7,7 @@ Tested up to: 7.1
 Stable tag: 0.24.0  
 Requires PHP: 7.4  
 License: GPLv2 or later  
-Donate link: https://evp.to/donate
+Donate link: <https://evp.to/donate>
 
 Host your used Google fonts on your server and make your site more GDPR compliant 💯.
 
@@ -99,9 +99,6 @@ You may have loaded a subset which doesn't included required characters. Check a
 
 ### Unreleased
 
-- fixed: saving one Google Fonts option no longer enables the other option
-- fixed: Host, Reload, and Remove buttons ignoring font handles with uppercase letters or other characters
-- fixed: font stylesheet not written when no font files could be downloaded
 - improved: stricter handling of font source URLs and downloads
 - changed: font sources from unsupported hosts are no longer processed and are removed from the settings page
 
