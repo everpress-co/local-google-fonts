@@ -9,6 +9,7 @@ namespace EverPress;
 class LGF_Parser {
 
 	private $src;
+	private $provider;
 	private $id;
 	private $styles;
 	private $remote_styles;
@@ -98,9 +99,14 @@ class LGF_Parser {
 
 					// Add the file URL.
 					$remote_url = rtrim( ltrim( $match[0], 'url(' ), ')' );
+					$remote_url = trim( $remote_url, "'\"" );
 
 					// Make sure to convert relative URLs to absolute.
 					$remote_url = $this->get_absolute_path( $remote_url );
+
+					if ( ! $this->provider || ! LGF::is_font_file_url( $remote_url, $this->provider ) ) {
+						continue;
+					}
 
 					$version = '';
 					if ( preg_match( '/v(\d+)/', $remote_url, $m ) ) {
@@ -191,12 +197,17 @@ class LGF_Parser {
 	}
 
 	public function set_src( $src ) {
-		$this->id = md5( $src );
-		if ( 0 === stripos( $src, '//' ) ) {
-			$parsed_url = wp_parse_url( home_url() );
-			$src        = $parsed_url['scheme'] . ':' . $src;
+		$normalized = LGF::normalize_css_url( $src );
+		if ( false === $normalized ) {
+			$this->src      = $src;
+			$this->provider = null;
+			$this->id       = md5( (string) $src );
+			return;
 		}
-		$this->src = $src;
+
+		$this->src      = $normalized;
+		$this->provider = LGF::get_provider_for_css_url( $normalized );
+		$this->id       = md5( $normalized );
 	}
 
 	public function get_src() {
@@ -238,6 +249,15 @@ class LGF_Parser {
 	}
 
 	private function get_remote( $url, $args = array() ) {
+
+		$normalized = LGF::normalize_css_url( $url );
+		if ( false === $normalized ) {
+			return new \WP_Error(
+				'invalid_font_url',
+				esc_html__( 'The font stylesheet URL is not from a supported host.', 'local-google-fonts' )
+			);
+		}
+		$url = $normalized;
 
 		$transient_key = 'lcg_req_' . md5( $url . serialize( $args ) );
 		if ( false === ( $response = get_transient( $transient_key ) ) ) {

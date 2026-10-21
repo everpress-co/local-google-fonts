@@ -5,7 +5,20 @@ namespace EverPress;
 class LGF {
 
 	private static $instance = null;
-	private $user_agent      = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36';
+
+	/**
+	 * Supported font providers (stylesheet host and font file host).
+	 *
+	 * @var array<string, array{css_host: string, font_host: string}>
+	 */
+	private static $providers = array(
+		'google' => array(
+			'css_host'  => 'fonts.googleapis.com',
+			'font_host' => 'fonts.gstatic.com',
+		),
+	);
+
+	private $user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36';
 
 	private function __construct() {
 
@@ -37,6 +50,139 @@ class LGF {
 		$folder     = $upload_dir['error'] ? WP_CONTENT_DIR . '/uploads/fonts' : $upload_dir['basedir'] . '/fonts';
 
 		return apply_filters( 'lgf_folder', $folder );
+	}
+
+	/**
+	 * Normalize and validate a Google Fonts stylesheet URL.
+	 *
+	 * Only supported font hosts are accepted (HTTPS, official CSS path).
+	 *
+	 * @since [Unreleased]
+	 *
+	 * @param string $url Stylesheet URL.
+	 * @return string|false Normalized HTTPS URL, or false if unsupported.
+	 */
+	public static function normalize_css_url( $url ) {
+		$parsed = self::parse_validated_css_url( $url );
+
+		return false === $parsed ? false : $parsed['url'];
+	}
+
+	/**
+	 * Provider key for a valid stylesheet URL.
+	 *
+	 * @since [Unreleased]
+	 *
+	 * @param string $url Stylesheet URL.
+	 * @return string|false Provider key, or false if unsupported.
+	 */
+	public static function get_provider_for_css_url( $url ) {
+		$parsed = self::parse_validated_css_url( $url );
+
+		return false === $parsed ? false : $parsed['provider'];
+	}
+
+	/**
+	 * Whether a URL points at a font file on the provider's font host.
+	 *
+	 * @since [Unreleased]
+	 *
+	 * @param string $url      Font file URL.
+	 * @param string $provider Provider key from get_provider_for_css_url().
+	 * @return bool
+	 */
+	public static function is_font_file_url( $url, $provider ) {
+		if ( ! isset( self::$providers[ $provider ] ) ) {
+			return false;
+		}
+
+		if ( ! is_string( $url ) || '' === $url ) {
+			return false;
+		}
+
+		$url = trim( $url );
+		$url = trim( $url, "'\"" );
+
+		if ( 0 === stripos( $url, '//' ) ) {
+			$url = 'https:' . $url;
+		}
+
+		$parsed = wp_parse_url( $url );
+		if ( ! is_array( $parsed ) || empty( $parsed['host'] ) ) {
+			return false;
+		}
+
+		if ( isset( $parsed['user'] ) || isset( $parsed['pass'] ) || isset( $parsed['port'] ) ) {
+			return false;
+		}
+
+		if ( ! isset( $parsed['scheme'] ) || 'https' !== strtolower( $parsed['scheme'] ) ) {
+			return false;
+		}
+
+		$font_host = self::$providers[ $provider ]['font_host'];
+
+		return strtolower( $parsed['host'] ) === strtolower( $font_host );
+	}
+
+	/**
+	 * @since [Unreleased]
+	 *
+	 * @param string $url Stylesheet URL.
+	 * @return array{url: string, provider: string}|false
+	 */
+	private static function parse_validated_css_url( $url ) {
+		if ( ! is_string( $url ) || '' === $url ) {
+			return false;
+		}
+
+		$url = trim( $url );
+
+		if ( 0 === stripos( $url, '//' ) ) {
+			$url = 'https:' . $url;
+		}
+
+		$parsed = wp_parse_url( $url );
+		if ( ! is_array( $parsed ) || empty( $parsed['host'] ) ) {
+			return false;
+		}
+
+		if ( isset( $parsed['user'] ) || isset( $parsed['pass'] ) || isset( $parsed['port'] ) ) {
+			return false;
+		}
+
+		$scheme = isset( $parsed['scheme'] ) ? strtolower( $parsed['scheme'] ) : '';
+		if ( 'http' === $scheme ) {
+			$scheme = 'https';
+		}
+		if ( 'https' !== $scheme ) {
+			return false;
+		}
+
+		$path = isset( $parsed['path'] ) ? $parsed['path'] : '';
+		if ( 0 !== strpos( $path, '/css' ) ) {
+			return false;
+		}
+
+		$host = strtolower( $parsed['host'] );
+
+		foreach ( self::$providers as $provider_key => $provider ) {
+			if ( $host !== strtolower( $provider['css_host'] ) ) {
+				continue;
+			}
+
+			$normalized = 'https://' . $provider['css_host'] . $path;
+			if ( ! empty( $parsed['query'] ) ) {
+				$normalized .= '?' . $parsed['query'];
+			}
+
+			return array(
+				'url'      => $normalized,
+				'provider' => $provider_key,
+			);
+		}
+
+		return false;
 	}
 
 	public static function get_folder_url() {
@@ -74,6 +220,12 @@ class LGF {
 
 		// remove 'ver' query arg as it is added by WP
 		$src = preg_replace( '/&ver=([^&]+)/', '', $src );
+
+		$normalized = self::normalize_css_url( $src );
+		if ( false === $normalized ) {
+			return $src;
+		}
+		$src = $normalized;
 
 		$id = md5( $src );
 
@@ -190,6 +342,12 @@ class LGF {
 		// remove 'ver' query arg as it is added by WP
 		$src = preg_replace( '/&ver=([^&]+)/', '', $src );
 
+		$normalized = self::normalize_css_url( $src );
+		if ( false === $normalized ) {
+			return $org;
+		}
+		$src = $normalized;
+
 		$id = md5( $src );
 
 		$folder     = self::get_folder();
@@ -236,7 +394,9 @@ class LGF {
 	public function switch_stylesheet_src( $src, $handle ) {
 
 		if ( false !== strpos( $src, '//fonts.googleapis.com/css' ) ) {
-			$src = $this->google_to_local_url( $src, $handle );
+			if ( false !== self::normalize_css_url( $src ) ) {
+				$src = $this->google_to_local_url( $src, $handle );
+			}
 		}
 		return $src;
 	}
