@@ -97,6 +97,12 @@ You may have loaded a subset which doesn't included required characters. Check a
 
 ## Changelog
 
+### [Unreleased]
+
+- fixed: server-side request forgery (SSRF) via unvalidated Google Fonts stylesheet and font file URLs
+- improved: settings page avoids re-fetching Google when local font files already exist
+- improved: remote font downloads use size limits and require a successful HTTP response before saving files
+
 ### 0.24.0
 
 - added: option to use relative URLs

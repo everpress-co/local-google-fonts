@@ -1,7 +1,8 @@
 <?php
 
-
 namespace EverPress;
+
+defined( 'ABSPATH' ) || exit;
 
 class LGF_Upgrade {
 
@@ -82,6 +83,15 @@ class LGF_Upgrade {
 		
 	}
 
-
-
+	/**
+	 * Scrub invalid buffer entries introduced before SSRF hardening.
+	 *
+	 * @since [Unreleased]
+	 */
+	private function update_0_25_0() {
+		$removed = LGF_Url::scrub_font_buffer( true );
+		if ( $removed > 0 ) {
+			set_transient( 'lgf_buffer_scrubbed', $removed, DAY_IN_SECONDS );
+		}
+	}
 }

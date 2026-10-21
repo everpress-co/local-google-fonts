@@ -6,6 +6,8 @@ Thanks to https://github.com/WPTT/webfont-loader for parsing help
 
 namespace EverPress;
 
+defined( 'ABSPATH' ) || exit;
+
 class LGF_Parser {
 
 	private $src;
@@ -22,7 +24,7 @@ class LGF_Parser {
 		$this->set_format( $format );
 	}
 
-	public function parse() {
+	public function parse( $local_only = false ) {
 
 		$result              = array();
 		$this->remote_styles = '';
@@ -30,8 +32,13 @@ class LGF_Parser {
 		$folder              = LGF::get_folder();
 		$folder_url          = LGF::get_folder_url();
 
-		foreach ( $this->format as $format ) {
-			$remote_styles = $this->get_remote_styleheet( $format );
+		$formats = $this->format;
+		if ( $local_only ) {
+			$formats = array( 'woff2' );
+		}
+
+		foreach ( $formats as $format ) {
+			$remote_styles = $this->get_remote_styleheet( $format, $local_only );
 			if ( is_wp_error( $remote_styles ) ) {
 				continue;
 			}
@@ -102,6 +109,10 @@ class LGF_Parser {
 					// Make sure to convert relative URLs to absolute.
 					$remote_url = $this->get_absolute_path( $remote_url );
 
+					if ( ! LGF_Url::is_allowed_font_file_url( $remote_url ) ) {
+						continue;
+					}
+
 					$version = '';
 					if ( preg_match( '/v(\d+)/', $remote_url, $m ) ) {
 						$version = 'v' . $m[1];
@@ -125,8 +136,20 @@ class LGF_Parser {
 						$unicode_range = trim( str_replace( array( "'", ';' ), '', $unicode_range ) );
 					}
 
-					$subset   = $this->get_subset_by_range( $unicode_range );
-					$filename = $folder . '/' . $this->id . '/' . sprintf( '%s-%s-%s-%s-%s.%s', $sanitized, $subset, $version, $font_style, $font_weight, $format );
+					$subset = $this->get_subset_by_range( $unicode_range );
+					$basename = sprintf(
+						'%s-%s-%s-%s-%s.%s',
+						sanitize_file_name( $sanitized ),
+						sanitize_file_name( (string) $subset ),
+						sanitize_file_name( (string) $version ),
+						sanitize_file_name( (string) $font_style ),
+						sanitize_file_name( (string) $font_weight ),
+						sanitize_file_name( (string) $format )
+					);
+					$filename = LGF_Url::font_face_path( $this->id, $basename );
+					if ( false === $filename ) {
+						continue;
+					}
 
 					$result[ $sanitized ]['variants'][] = sprintf( '%s %s', $font_style, $font_weight );
 
@@ -221,13 +244,42 @@ class LGF_Parser {
 			return $parsed_url['scheme'] . ':' . $url;
 		} elseif ( 0 === stripos( $url, '/' ) ) {
 			$parsed_url = wp_parse_url( $this->src );
-			return $parsed_url['scheme'] . '://' . $parsed_url['hostname'] . $url;
+			$host       = isset( $parsed_url['host'] ) ? $parsed_url['host'] : '';
+			return $parsed_url['scheme'] . '://' . $host . $url;
 		}
 
 		return $url;
 	}
 
-	private function get_remote_styleheet( $format = 'woff2' ) {
+	private function get_remote_styleheet( $format = 'woff2', $local_only = false ) {
+
+		if ( $local_only ) {
+			$path = LGF::get_folder() . '/' . $this->id . '/font.css';
+			if ( ! is_readable( $path ) ) {
+				return new \WP_Error(
+					'local_stylesheet_missing',
+					esc_html__( 'Local font stylesheet was not found.', 'local-google-fonts' )
+				);
+			}
+			$body = file_get_contents( $path );
+			if ( false === $body ) {
+				return new \WP_Error(
+					'local_stylesheet_unreadable',
+					esc_html__( 'Local font stylesheet could not be read.', 'local-google-fonts' )
+				);
+			}
+			if ( preg_match( '/\*\/\s*(.*)$/s', $body, $match ) ) {
+				return $match[1];
+			}
+			return $body;
+		}
+
+		if ( ! LGF_Url::is_allowed_stylesheet_url( $this->src ) ) {
+			return new \WP_Error(
+				'invalid_stylesheet_url',
+				esc_html__( 'The font stylesheet URL is not allowed.', 'local-google-fonts' )
+			);
+		}
 
 		$response = $this->get_remote( $this->src, array( 'user-agent' => $this->get_user_agent_by_format( $format ) ) );
 		if ( is_wp_error( $response ) ) {
@@ -239,15 +291,22 @@ class LGF_Parser {
 
 	private function get_remote( $url, $args = array() ) {
 
+		if ( ! LGF_Url::is_allowed_stylesheet_url( $url ) ) {
+			return new \WP_Error(
+				'invalid_stylesheet_url',
+				esc_html__( 'The font stylesheet URL is not allowed.', 'local-google-fonts' )
+			);
+		}
+
 		$transient_key = 'lcg_req_' . md5( $url . serialize( $args ) );
 		if ( false === ( $response = get_transient( $transient_key ) ) ) {
-			$response = wp_remote_get( $url, $args );
+			$response = LGF_Url::safe_remote_get( $url, 'css', $args );
 
 			if ( is_wp_error( $response ) ) {
 				return $response;
 			}
 			$code = wp_remote_retrieve_response_code( $response );
-			if ( 200 === $code ) {
+			if ( 200 === (int) $code ) {
 				set_transient( $transient_key, $response, DAY_IN_SECONDS );
 			} else {
 				/* Translators: %s: URL */

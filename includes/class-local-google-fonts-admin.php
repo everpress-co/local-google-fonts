@@ -1,7 +1,8 @@
 <?php
 
-
 namespace EverPress;
+
+defined( 'ABSPATH' ) || exit;
 
 class LGF_Admin {
 
@@ -80,10 +81,9 @@ class LGF_Admin {
 
 		if ( isset( $_POST['hostlocal'] ) && wp_verify_nonce( $nonce, 'local_google_fonts' ) ) {
 			$handle = sanitize_key( wp_unslash( $_POST['hostlocal'] ) );
-			if ( isset( $buffer[ $handle ] ) ) {
+			if ( isset( $buffer[ $handle ] ) && LGF_Url::is_allowed_stylesheet_url( $buffer[ $handle ]['src'] ) ) {
 				$class->remove_set( $buffer[ $handle ]['id'] );
 				$class->process_url( $buffer[ $handle ]['src'], $handle );
-
 			}
 		}
 
@@ -137,12 +137,27 @@ class LGF_Admin {
 	}
 
 
-	public function get_parser( $src ) {
+	public function get_parser( $src, $prefer_local = true ) {
+
+		if ( ! LGF_Url::is_allowed_stylesheet_url( $src ) ) {
+			return new \WP_Error(
+				'invalid_stylesheet_url',
+				esc_html__( 'The font stylesheet URL is not allowed.', 'local-google-fonts' )
+			);
+		}
 
 		include_once dirname( LGF_PLUGIN_FILE ) . '/includes/class-local-google-fonts-parser.php';
 
+		$src_for_id = preg_replace( '/&ver=([^&]+)/', '', $src );
+		$id         = md5( $src_for_id );
+		$local_only = false;
+		if ( $prefer_local ) {
+			$font_css   = LGF::get_folder() . '/' . $id . '/font.css';
+			$local_only = is_readable( $font_css );
+		}
+
 		$parser = new LGF_Parser( $src );
-		$parser->parse();
+		$parser->parse( $local_only );
 
 		return $parser;
 	}

@@ -2,6 +2,8 @@
 
 namespace EverPress;
 
+defined( 'ABSPATH' ) || exit;
+
 class LGF {
 
 	private static $instance = null;
@@ -75,6 +77,10 @@ class LGF {
 		// remove 'ver' query arg as it is added by WP
 		$src = preg_replace( '/&ver=([^&]+)/', '', $src );
 
+		if ( ! LGF_Url::is_allowed_stylesheet_url( $src ) ) {
+			return $src;
+		}
+
 		$id = md5( $src );
 
 		if ( ! function_exists( 'download_url' ) ) {
@@ -113,14 +119,14 @@ class LGF {
 		$new_dir = $folder . '/' . $id . '/font.css';
 
 		$class  = LGF_Admin::get_instance();
-		$parser = $class->get_parser( $src );
-
-		$info       = $parser->get_info();
-		$stylesheet = $parser->get_remote_styles();
+		$parser = $class->get_parser( $src, false );
 
 		if ( is_wp_error( $parser ) ) {
 			return $src;
 		}
+
+		$info       = $parser->get_info();
+		$stylesheet = $parser->get_remote_styles();
 
 		$options = get_option( 'local_google_fonts' );
 		if ( isset( $options['relative_urls'] ) ) {
@@ -129,18 +135,39 @@ class LGF {
 			$relative_urls = false;
 		}
 
+		$face_dir = $folder . '/' . $id;
+		if ( ! is_dir( $face_dir ) ) {
+			wp_mkdir_p( $face_dir );
+		}
+
 		foreach ( $info as $font ) {
 
 			foreach ( $font['faces'] as $face ) {
 
-				$response = wp_remote_get( $face['remote_url'], array( 'user-agent' => $this->user_agent ) );
+				if ( ! LGF_Url::is_allowed_font_file_url( $face['remote_url'] ) ) {
+					continue;
+				}
 
-				if ( ! is_wp_error( $response ) ) {
-					if ( ! is_dir( dirname( $face['file'] ) ) ) {
-						wp_mkdir_p( dirname( $face['file'] ) );
-					}
-					$data = wp_remote_retrieve_body( $response );
+				$response = LGF_Url::safe_remote_get(
+					$face['remote_url'],
+					'font',
+					array( 'user-agent' => $this->user_agent )
+				);
 
+				if ( is_wp_error( $response ) ) {
+					continue;
+				}
+
+				if ( 200 !== (int) wp_remote_retrieve_response_code( $response ) ) {
+					continue;
+				}
+
+				if ( ! is_dir( dirname( $face['file'] ) ) ) {
+					wp_mkdir_p( dirname( $face['file'] ) );
+				}
+				$data = wp_remote_retrieve_body( $response );
+
+				if ( '' !== $data ) {
 					$WP_Filesystem->put_contents( $face['file'], $data );
 
 					$url = $face['local_url'];
@@ -150,7 +177,6 @@ class LGF {
 
 					$local_file = add_query_arg( 'c', time(), $url );
 					$stylesheet = str_replace( $face['remote_url'], $local_file, $stylesheet );
-
 				}
 			}
 		}
@@ -165,16 +191,20 @@ class LGF {
 
 	public function replace_in_content( $content ) {
 
-		if ( false !== strpos( $content, '//fonts.googleapis.com/css' ) ) {
+		if ( false === strpos( $content, 'fonts.googleapis.com' ) ) {
+			return $content;
+		}
 
-			$regex = "/\b(?:(?:https?):\/\/fonts\.googleapis\.com\/css)[-a-z0-9+&@#\/%?=~_|!:,.;]*[-a-z0-9+&@#\/%=~_|]/i";
+		$regex = '#(?:(?:https?:)?//fonts\.googleapis\.com/css[^\s"\'<>]*)#i';
 
-			if ( $urls = preg_match_all( $regex, $content, $matches ) ) {
-				foreach ( $matches[0] as $i => $url ) {
-					$local_url = $this->google_to_local_url( $url );
-					if ( $local_url != $url ) {
-						$content = str_replace( $url, $local_url, $content );
-					}
+		if ( preg_match_all( $regex, $content, $matches ) ) {
+			foreach ( $matches[0] as $url ) {
+				if ( ! LGF_Url::is_allowed_stylesheet_url( $url ) ) {
+					continue;
+				}
+				$local_url = $this->google_to_local_url( $url );
+				if ( $local_url !== $url ) {
+					$content = str_replace( $url, $local_url, $content );
 				}
 			}
 		}
@@ -189,6 +219,10 @@ class LGF {
 
 		// remove 'ver' query arg as it is added by WP
 		$src = preg_replace( '/&ver=([^&]+)/', '', $src );
+
+		if ( ! LGF_Url::is_allowed_stylesheet_url( $src ) ) {
+			return $org;
+		}
 
 		$id = md5( $src );
 
@@ -235,7 +269,7 @@ class LGF {
 
 	public function switch_stylesheet_src( $src, $handle ) {
 
-		if ( false !== strpos( $src, '//fonts.googleapis.com/css' ) ) {
+		if ( LGF_Url::is_allowed_stylesheet_url( $src ) ) {
 			$src = $this->google_to_local_url( $src, $handle );
 		}
 		return $src;
@@ -292,7 +326,7 @@ class LGF {
 	public function add_action_link( $links, $file ) {
 
 		if ( $file == 'local-google-fonts/local-google-fonts.php' ) {
-			array_unshift( $links, '<a href="' . admin_url( 'options-general.php?page=lgf-settings' ) . '">' . esc_html__( 'Settings', 'local-google-fonts' ) . '</a>' );
+			array_unshift( $links, '<a href="' . esc_url( admin_url( 'options-general.php?page=lgf-settings' ) ) . '">' . esc_html__( 'Settings', 'local-google-fonts' ) . '</a>' );
 		}
 
 		return $links;

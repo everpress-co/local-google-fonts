@@ -6,6 +6,7 @@ Version: 0.24.0
 Author: EverPress
 Author URI: https://everpress.co
 License: GPLv2 or later
+Text Domain: local-google-fonts
 */
 
 namespace EverPress;
@@ -17,6 +18,7 @@ if ( ! defined( 'LGF_PLUGIN_FILE' ) ) {
 }
 
 if ( ! class_exists( 'EverPress\LGF' ) ) {
+	include_once 'includes/class-local-google-fonts-url.php';
 	include_once 'includes/class-local-google-fonts.php';
 	include_once 'includes/class-local-google-fonts-admin.php';
 	include_once 'includes/class-local-google-fonts-upgrade.php';

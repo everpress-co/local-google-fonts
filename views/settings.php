@@ -1,5 +1,22 @@
 <?php
 
+defined( 'ABSPATH' ) || exit;
+
+$scrubbed = get_transient( 'lgf_buffer_scrubbed' );
+if ( false !== $scrubbed ) {
+	delete_transient( 'lgf_buffer_scrubbed' );
+	add_settings_error(
+		'local_google_fonts_messages',
+		'local_google_fonts_scrubbed',
+		sprintf(
+			/* translators: %d: number of removed font sources */
+			esc_html__( '%d invalid Google font source(s) were removed from the list for security reasons.', 'local-google-fonts' ),
+			(int) $scrubbed
+		),
+		'warning'
+	);
+}
+
 $buffer = get_option( 'local_google_fonts_buffer', array() );
 
 $upload_dir = wp_get_upload_dir();
@@ -36,16 +53,24 @@ if ( ! $count ) :
 	
 		<?php foreach ( $buffer as $id => $data ) : ?>
 
+			<?php
+			if ( ! LGF_Url::is_allowed_stylesheet_url( $data['src'] ) ) {
+				continue;
+			}
+			$parser = $this->get_parser( $data['src'] );
+			?>
+
 	<h3><?php esc_html_e( 'Handle', 'local-google-fonts' ); ?>: <code><?php echo esc_html( $data['handle'] ); ?></code></h3>
-	<p><?php esc_html_e( 'Original URL', 'local-google-fonts' ); ?>: <a href="<?php echo esc_url( $data['src'] ); ?>" class="dashicons dashicons-external" target="_blank" title="<?php esc_attr_e( 'show original URL', 'local-google-fonts' ); ?>"></a><code class="original-url"><?php echo esc_html( rawurldecode( $data['src'] ) ); ?></code></p>
+	<p><?php esc_html_e( 'Original URL', 'local-google-fonts' ); ?>: <a href="<?php echo esc_url( $data['src'] ); ?>" class="dashicons dashicons-external" target="_blank" rel="noopener noreferrer" title="<?php esc_attr_e( 'show original URL', 'local-google-fonts' ); ?>"></a><code class="original-url"><?php echo esc_html( rawurldecode( $data['src'] ) ); ?></code></p>
 
-			<?php $fontinfo = $this->get_parser( $data['src'] )->get_info(); ?>
-
-			<?php if ( is_wp_error( $fontinfo ) ) : ?>
+			<?php if ( is_wp_error( $parser ) ) : ?>
 		<div class="notice inline error">
-			<p><strong><?php echo esc_html( $fontinfo->get_error_message() ); ?></strong></p>
+			<p><strong><?php echo esc_html( $parser->get_error_message() ); ?></strong></p>
 		</div>
-		<?php else : ?>
+			<?php
+			else :
+				$fontinfo = $parser->get_info();
+				?>
 
 		<table class="wp-list-table widefat fixed striped table-view-list ">
 			<thead>
