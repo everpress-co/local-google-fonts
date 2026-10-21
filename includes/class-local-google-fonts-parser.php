@@ -263,7 +263,7 @@ class LGF_Parser {
 	}
 
 	/**
-	 * @since [Unreleased]
+	 * @since 0.25.0
 	 *
 	 * @param string|null $value Filename segment.
 	 * @return string

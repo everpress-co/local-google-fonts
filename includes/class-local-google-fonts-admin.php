@@ -117,7 +117,7 @@ class LGF_Admin {
 	 * Buffer keys are the original style handles. Changing them with sanitize_key()
 	 * drops mixed-case handles and other characters before the lookup.
 	 *
-	 * @since [Unreleased]
+	 * @since 0.25.0
 	 *
 	 * @param mixed $handle Posted handle.
 	 * @param mixed $buffer Stored font buffer.
