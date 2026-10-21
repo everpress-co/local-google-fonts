@@ -312,10 +312,9 @@ class LGF {
 				$response = wp_safe_remote_get(
 					$face['remote_url'],
 					array(
-						'redirection'         => 0,
-						'timeout'             => 30,
-						'limit_response_size' => 5242880,
-						'user-agent'          => $this->user_agent,
+						'redirection' => 0,
+						'timeout'     => 30,
+						'user-agent'  => $this->user_agent,
 					)
 				);
 
