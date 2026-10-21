@@ -97,6 +97,12 @@ You may have loaded a subset which doesn't included required characters. Check a
 
 ## Changelog
 
+### Unreleased
+
+- fixed: font stylesheet not written when no font files could be downloaded
+- improved: stricter handling of font source URLs and downloads
+- changed: font sources from unsupported hosts are no longer processed and are removed from the settings page
+
 ### 0.24.0
 
 - added: option to use relative URLs
