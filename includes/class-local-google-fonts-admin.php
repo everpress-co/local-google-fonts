@@ -66,13 +66,11 @@ class LGF_Admin {
 
 		$buffer = get_option( 'local_google_fonts_buffer', array() );
 		if ( isset( $_POST['subsets'] ) && wp_verify_nonce( $nonce, 'local_google_fonts' ) ) {
-			$subsets = wp_unslash( $_POST['subsets'] );
-			foreach ( $subsets as $handle => $subsets ) {
+			$posted_subsets = wp_unslash( $_POST['subsets'] );
+			foreach ( (array) $posted_subsets as $handle => $subset_values ) {
+				$handle = sanitize_key( $handle );
 				if ( isset( $buffer[ $handle ] ) ) {
-					if ( ! isset( $buffer[ $handle ]['subsets'] ) ) {
-						$buffer[ $handle ]['subsets'] = array();
-					}
-					$buffer[ $handle ]['subsets'] = $subsets;
+					$buffer[ $handle ]['subsets'] = array_map( 'sanitize_key', (array) $subset_values );
 				}
 			}
 		}
@@ -98,7 +96,13 @@ class LGF_Admin {
 			$class->clear();
 		}
 
-		return $options;
+		$sanitized = array();
+		if ( is_array( $options ) ) {
+			$sanitized['auto_load']     = ! empty( $options['auto_load'] );
+			$sanitized['relative_urls'] = ! empty( $options['relative_urls'] );
+		}
+
+		return $sanitized;
 	}
 
 	public function settings( $args ) {

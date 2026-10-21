@@ -539,7 +539,7 @@ class LGF {
 	public function add_action_link( $links, $file ) {
 
 		if ( $file == 'local-google-fonts/local-google-fonts.php' ) {
-			array_unshift( $links, '<a href="' . admin_url( 'options-general.php?page=lgf-settings' ) . '">' . esc_html__( 'Settings', 'local-google-fonts' ) . '</a>' );
+			array_unshift( $links, '<a href="' . esc_url( admin_url( 'options-general.php?page=lgf-settings' ) ) . '">' . esc_html__( 'Settings', 'local-google-fonts' ) . '</a>' );
 		}
 
 		return $links;
